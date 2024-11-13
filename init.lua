@@ -188,6 +188,14 @@ require("lazy").setup({
 		"stevearc/overseer.nvim",
 		opts = {},
 	},
+  {
+    "folke/twilight.nvim",
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  },
 	{
 		"pianocomposer321/officer.nvim",
 		dependencies = "stevearc/overseer.nvim",
@@ -255,6 +263,7 @@ require("lazy").setup({
 		build = ':lua require("go.install").update_all_sync()', -- if you need to install/update all binaries
 	},
 	-- "tpope/vim-dispatch",
+  'chrisbra/Colorizer',
 	"junegunn/fzf",
 	"junegunn/fzf.vim",
 	"williamboman/mason-lspconfig.nvim",
@@ -833,6 +842,10 @@ vim.api.nvim_set_keymap("n", "<BS>", ":bp<CR>", { noremap = true, silent = true 
 -- ========================================================================
 -- ========================== Custom Highlighting =========================
 -- ========================================================================
+vim.api.nvim_set_hl(0, "DiffDelete", { fg = "#FF0000", bg = "NONE" })
+vim.api.nvim_set_hl(0, "DiffAdd", { fg = "#00ff00", bg = "NONE" })
+vim.api.nvim_set_hl(0, "DiffContext", { fg = "gray", bg = "NONE" })
+
 vim.api.nvim_set_hl(0, "NeogitDiffDelete", { fg = "#FF0000", bg = "NONE" })
 vim.api.nvim_set_hl(0, "NeogitDiffAdd", { fg = "#00ff00", bg = "NONE" })
 vim.api.nvim_set_hl(0, "NeogitDiffContext", { fg = "gray", bg = "NONE" })
@@ -840,3 +853,5 @@ vim.api.nvim_set_hl(0, "NeogitDiffContext", { fg = "gray", bg = "NONE" })
 vim.api.nvim_set_hl(0, "NeogitDiffDeleteHighlight", { fg = "#ff0000", bg = "NONE" })
 vim.api.nvim_set_hl(0, "NeogitDiffAddHighlight", { fg = "#00ff00", bg = "NONE" })
 vim.api.nvim_set_hl(0, "NeogitDiffContextHighlight", { fg = "gray", bg = "NONE" })
+
+
