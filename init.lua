@@ -188,14 +188,14 @@ require("lazy").setup({
 		"stevearc/overseer.nvim",
 		opts = {},
 	},
-  {
-    "folke/twilight.nvim",
-    opts = {
-      -- your configuration comes here
-      -- or leave it empty to use the default settings
-      -- refer to the configuration section below
-    }
-  },
+	{
+		"folke/twilight.nvim",
+		opts = {
+			-- your configuration comes here
+			-- or leave it empty to use the default settings
+			-- refer to the configuration section below
+		},
+	},
 	{
 		"pianocomposer321/officer.nvim",
 		dependencies = "stevearc/overseer.nvim",
@@ -263,7 +263,7 @@ require("lazy").setup({
 		build = ':lua require("go.install").update_all_sync()', -- if you need to install/update all binaries
 	},
 	-- "tpope/vim-dispatch",
-  'chrisbra/Colorizer',
+	"chrisbra/Colorizer",
 	"junegunn/fzf",
 	"junegunn/fzf.vim",
 	"williamboman/mason-lspconfig.nvim",
@@ -854,35 +854,71 @@ vim.api.nvim_set_hl(0, "NeogitDiffDeleteHighlight", { fg = "#ff0000", bg = "NONE
 vim.api.nvim_set_hl(0, "NeogitDiffAddHighlight", { fg = "#00ff00", bg = "NONE" })
 vim.api.nvim_set_hl(0, "NeogitDiffContextHighlight", { fg = "gray", bg = "NONE" })
 
+vim.keymap.set("n", "<leader>Q", function()
+	-- Gather buffers displayed in any window
+	local displayed_buffers = {}
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		displayed_buffers[vim.api.nvim_win_get_buf(win)] = true
+	end
 
+	-- Iterate over all buffers
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if not displayed_buffers[buf] then
+			local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+			local modifiable = vim.api.nvim_buf_get_option(buf, "modifiable")
+			local modified = vim.api.nvim_buf_get_option(buf, "modified")
+			local name = vim.api.nvim_buf_get_name(buf)
 
+			-- If it's a modifiable text buffer with a filename and unsaved changes, save it
+			if modifiable and modified and buftype == "" and name ~= "" then
+				vim.api.nvim_buf_call(buf, function()
+					vim.cmd("silent! write")
+				end)
+			end
 
-
-
-vim.keymap.set('n', '<leader>Q', function()
-  -- Gather buffers displayed in any window
-  local displayed_buffers = {}
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    displayed_buffers[vim.api.nvim_win_get_buf(win)] = true
-  end
-
-  -- Iterate over all buffers
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if not displayed_buffers[buf] then
-      local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
-      local modifiable = vim.api.nvim_buf_get_option(buf, 'modifiable')
-      local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-      local name = vim.api.nvim_buf_get_name(buf)
-
-      -- If it's a modifiable text buffer with a filename and unsaved changes, save it
-      if modifiable and modified and buftype == '' and name ~= '' then
-        vim.api.nvim_buf_call(buf, function()
-          vim.cmd('silent! write')
-        end)
-      end
-
-      -- Delete the buffer (including terminal or unnamed buffers)
-      pcall(vim.api.nvim_buf_delete, buf, {force = true})
-    end
-  end
+			-- Delete the buffer (including terminal or unnamed buffers)
+			pcall(vim.api.nvim_buf_delete, buf, { force = true })
+		end
+	end
 end, { desc = "Save & close all undisplayed buffers" })
+
+-- Keybinding for visual mode
+vim.api.nvim_set_keymap(
+	"v",
+	"<leader>o",
+	[[:<C-u>lua surround_visual_with_org_block()<CR>]],
+	{ noremap = true, silent = true }
+)
+
+-- Define the function inline
+function surround_visual_with_org_block()
+	-- Get the visual selection range
+	local start_pos = vim.fn.getpos("'<")
+	local end_pos = vim.fn.getpos("'>")
+
+	-- Prompt the user for block type
+	local block_type = vim.fn.input("Enter block type (e.g., src, quote): ")
+
+	-- Validate the block type
+	if block_type == "" then
+		print("Invalid block type!")
+		return
+	end
+
+	-- Construct the org block strings
+	local start_block = "#+begin_" .. block_type
+	local end_block
+
+	-- Automatically handle `src` blocks
+	if block_type:match("^src") then
+		end_block = "#+end_src"
+	else
+		end_block = "#+end_" .. block_type
+	end
+
+	-- Insert the org blocks
+	vim.fn.setpos(".", start_pos)
+	vim.cmd("normal! O" .. start_block)
+	vim.fn.setpos(".", end_pos)
+	vim.cmd("normal! Go" .. end_block)
+end
