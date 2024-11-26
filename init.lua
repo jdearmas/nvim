@@ -207,7 +207,7 @@ require("lazy").setup({
 	},
 	{ "shortcuts/no-neck-pain.nvim", version = "*" },
 	"lukas-reineke/indent-blankline.nvim",
-	"gcmt/taboo.vim",
+	"jdearmas/taboo.vim",
 	"mattn/emmet-vim",
 	"mbbill/undotree",
 	"nvim-treesitter/nvim-treesitter-context",
@@ -427,13 +427,10 @@ lsp_zero.setup_servers({
 	"dockerls",
 	"eslint",
 	"gopls",
-	"graphql",
 	"html",
 	"jsonls",
 	"lua_ls",
 	"pylsp",
-	"taplo",
-	"lemminx",
 	"yamlls",
 })
 
@@ -922,3 +919,37 @@ function surround_visual_with_org_block()
 	vim.fn.setpos(".", end_pos)
 	vim.cmd("normal! Go" .. end_block)
 end
+
+-- Automatically create directories and files if they don't exist
+local function ensure_directory(filepath)
+	local dir = vim.fn.fnamemodify(filepath, ":h")
+	if vim.fn.isdirectory(dir) == 0 then
+		vim.fn.mkdir(dir, "p")
+	end
+end
+
+local function create_file_if_not_exists(filepath)
+	if vim.fn.filereadable(filepath) == 0 then
+		local file = io.open(filepath, "w")
+		if file then
+			file:close()
+		end
+	end
+end
+
+vim.api.nvim_create_autocmd("BufNewFile", {
+	pattern = "*",
+	callback = function(ev)
+		local filepath = ev.match
+		ensure_directory(filepath)
+		create_file_if_not_exists(filepath)
+	end,
+})
+
+vim.api.nvim_create_autocmd("BufWritePre", {
+	pattern = "*",
+	callback = function(ev)
+		local filepath = ev.match
+		ensure_directory(filepath)
+	end,
+})
