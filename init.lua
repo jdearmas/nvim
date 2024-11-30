@@ -913,11 +913,24 @@ function surround_visual_with_org_block()
 		end_block = "#+end_" .. block_type
 	end
 
+	-- Determine the indentation level of the starting line
+	local start_line = start_pos[2]
+	local indent_level = vim.fn.indent(start_line)
+
+	-- Prepare indented block strings
+	local indent = string.rep(" ", indent_level)
+	start_block = indent .. start_block
+	end_block = indent .. end_block
+
 	-- Insert the org blocks
+	-- Go to the start position and insert the starting block
 	vim.fn.setpos(".", start_pos)
 	vim.cmd("normal! O" .. start_block)
+	-- Adjust the end position since adding the block changes line numbers
+	end_pos[2] = end_pos[2] + 1
+	-- Go to the adjusted end position and insert the ending block
 	vim.fn.setpos(".", end_pos)
-	vim.cmd("normal! Go" .. end_block)
+	vim.cmd("normal! o" .. end_block)
 end
 
 -- Automatically create directories and files if they don't exist
