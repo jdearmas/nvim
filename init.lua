@@ -966,3 +966,33 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 		ensure_directory(filepath)
 	end,
 })
+
+vim.api.nvim_set_keymap("n", "<leader>G", "", {
+	noremap = true,
+	silent = true,
+	callback = function()
+		require("orgmode").action("org_mappings.insert_todo_heading_respect_content")
+		require("orgmode").action("org_mappings.do_demote")
+	end,
+})
+
+-- Function to always perform a vertical diffsplit
+function diff_vertical()
+	vim.cmd("vertical diffsplit")
+end
+
+-- Set keybindings for common diff functions
+keymap = vim.api.nvim_set_keymap
+opts = { noremap = true, silent = true }
+
+-- Keybinding for starting a vertical diff split
+keymap("n", "<leader>dv", ":lua diff_vertical()<CR>", opts)
+
+-- Keybinding for toggling diff mode
+keymap("n", "<leader>dt", ":diffthis<CR>", opts)
+
+-- Keybinding for exiting diff mode
+keymap("n", "<leader>du", ":diffoff<CR>", opts)
+
+-- Keybinding for updating diffs
+keymap("n", "<leader>dr", ":diffupdate<CR>", opts)
