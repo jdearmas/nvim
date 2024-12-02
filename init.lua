@@ -750,7 +750,7 @@ vim.api.nvim_set_keymap("n", "K", "<PageUp>", {})
 vim.api.nvim_set_keymap("n", "<leader>lr", ":luafile %<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader>n", ":lua JumpToHover()<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader>r", ":only<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<leader><leader>", ":w<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<leader><leader>", ":w!<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader>h", ":Make<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader>q", ":lua ToggleQuickFix()<CR>", { noremap = true, silent = true })
 local diagnostics_active = false
