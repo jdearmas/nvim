@@ -219,7 +219,7 @@ require("lazy").setup({
   },
   { "shortcuts/no-neck-pain.nvim", version = "*" },
   "lukas-reineke/indent-blankline.nvim",
-  "jdearmas/taboo.vim",
+  "jdearmas/taboo",
   "mattn/emmet-vim",
   "mbbill/undotree",
   "nvim-treesitter/nvim-treesitter-context",
@@ -844,7 +844,7 @@ function SetMakePrgFromVisualSelection()
   local escaped_text = selected_text:gsub(" ", "\\ ")
 
   -- Use vim.cmd to set the makeprg
-  vim.cmd("set makeprg=" .. escaped_text)
+  vim.cmd("setlocal makeprg=" .. escaped_text)
 
   -- Print confirmation
   print("makeprg set to: " .. escaped_text)
@@ -1015,7 +1015,7 @@ keymap("n", "<leader>dr", ":diffupdate<CR>", opts)
 
 keymap("v", "n", "<C-y,", {})
 
-keymap("n", "<leader>ou", ":AerialToggle float<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<leader>ou", ":AerialNavToggle<CR>", { noremap = true, silent = true })
 
 
 
@@ -1413,3 +1413,23 @@ vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
   row = -2,              -- Shift hover window upwards
   col = 10,              -- Shift hover window slightly to the right
 })
+
+
+
+-- Put this in your Lua config (e.g., in `~/.config/nvim/lua/mybindings.lua`)
+vim.keymap.set('n', '<leader>d', function()
+  local filepath = vim.fn.expand('%:p')    -- Absolute path of current file
+  if vim.fn.empty(filepath) == 1 then
+    print("No file associated with this buffer.")
+    return
+  end
+  local patchfile = filepath .. '.patch'   -- We'll write the diff here
+  -- The trick: ":w !diff -u <old> - > <patch>"
+  -- ":%:p" is the file on disk (last saved), "-" is the current buffer via stdin
+  local cmd = string.format('write !diff -u %s - > %s',
+    vim.fn.shellescape(filepath),
+    vim.fn.shellescape(patchfile)
+  )
+  vim.cmd(cmd)
+  print("Patch created: " .. patchfile)
+end, { desc = 'Create diff patch of last saved vs. current buffer' })
