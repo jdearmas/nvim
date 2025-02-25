@@ -1433,3 +1433,10 @@ vim.keymap.set('n', '<leader>d', function()
   vim.cmd(cmd)
   print("Patch created: " .. patchfile)
 end, { desc = 'Create diff patch of last saved vs. current buffer' })
+
+
+vim.opt.wrap = true
+vim.opt.linebreak = true
+vim.opt.breakindent = true
+vim.opt.breakindentopt = "shift:2"
+vim.opt.showbreak = "↳ "
