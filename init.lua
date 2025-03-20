@@ -1430,3 +1430,59 @@ vim.opt.showbreak = "↳ "
 
 vim.g.dispatch_no_tmux_make = 1
 vim.g.dispatch_no_job_make = 1
+
+
+local function create_c_template()
+  -- Prompt the user for a directory name.
+  local dir = vim.fn.input("Enter directory name: ")
+  if dir == "" then
+    print("No directory entered.")
+    return
+  end
+
+  -- Expand home directory and define the target directory.
+  local home = vim.fn.expand("~")
+  local target_dir = home .. "/test/c/" .. dir
+  
+  -- Create the directory (including any parent directories).
+  vim.fn.mkdir(target_dir, "p")
+
+  -- Create main.c with the C code template.
+  local c_filepath = target_dir .. "/main.c"
+  local c_template = [[
+/* clang -o main main.c && ./main */
+#include <stdio.h>
+
+int main(void) {
+    printf("Hello, World!\n");
+    return 0;
+}
+]]
+  local c_file = io.open(c_filepath, "w")
+  if c_file then
+    c_file:write(c_template)
+    c_file:close()
+    print("C template created at " .. c_filepath)
+  else
+    print("Error creating file: " .. c_filepath)
+    return
+  end
+
+  -- Create a Makefile with build instructions.
+  local make_filepath = target_dir .. "/Makefile"
+  local make_template = "all:\n\tclang -o main main.c\n\t./main\n"
+  local make_file = io.open(make_filepath, "w")
+  if make_file then
+    make_file:write(make_template)
+    make_file:close()
+    print("Makefile created at " .. make_filepath)
+  else
+    print("Error creating file: " .. make_filepath)
+  end
+
+  -- Open main.c in Neovim.
+  vim.cmd("edit " .. c_filepath)
+end
+
+-- Map the function to a keybinding (<leader>ot).
+vim.api.nvim_set_keymap("n", "<leader>ot", "", { callback = create_c_template, noremap = true, silent = true })
