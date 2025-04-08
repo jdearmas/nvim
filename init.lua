@@ -766,8 +766,10 @@ vim.api.nvim_set_keymap("n", "<leader>lr", ":luafile %<CR>", { noremap = true, s
 vim.api.nvim_set_keymap("n", "<leader>n", ":lua JumpToHover()<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader>r", ":only<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader><leader>", ":w!<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<leader>h", ":Dispatch<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<leader>q", ":lua ToggleQuickFix()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "x", ":Dispatch<CR>", { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap("n", "<leader>h", ":Dispatch<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", ";", ":lua ToggleQuickFix()<CR>", { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap("n", "<leader>q", ":lua ToggleQuickFix()<CR>", { noremap = true, silent = true })
 local diagnostics_active = false
 vim.keymap.set("n", "<leader>tt", function()
 	diagnostics_active = not diagnostics_active
@@ -1431,25 +1433,24 @@ vim.opt.showbreak = "↳ "
 vim.g.dispatch_no_tmux_make = 1
 vim.g.dispatch_no_job_make = 1
 
-
 local function create_c_template()
-  -- Prompt the user for a directory name.
-  local dir = vim.fn.input("Enter directory name: ")
-  if dir == "" then
-    print("No directory entered.")
-    return
-  end
+	-- Prompt the user for a directory name.
+	local dir = vim.fn.input("Enter directory name: ")
+	if dir == "" then
+		print("No directory entered.")
+		return
+	end
 
-  -- Expand home directory and define the target directory.
-  local home = vim.fn.expand("~")
-  local target_dir = home .. "/test/c/" .. dir
-  
-  -- Create the directory (including any parent directories).
-  vim.fn.mkdir(target_dir, "p")
+	-- Expand home directory and define the target directory.
+	local home = vim.fn.expand("~")
+	local target_dir = home .. "/test/c/" .. dir
 
-  -- Create main.c with the C code template.
-  local c_filepath = target_dir .. "/main.c"
-  local c_template = [[
+	-- Create the directory (including any parent directories).
+	vim.fn.mkdir(target_dir, "p")
+
+	-- Create main.c with the C code template.
+	local c_filepath = target_dir .. "/main.c"
+	local c_template = [[
 /* clang -o main main.c && ./main */
 #include <stdio.h>
 
@@ -1458,31 +1459,77 @@ int main(void) {
     return 0;
 }
 ]]
-  local c_file = io.open(c_filepath, "w")
-  if c_file then
-    c_file:write(c_template)
-    c_file:close()
-    print("C template created at " .. c_filepath)
-  else
-    print("Error creating file: " .. c_filepath)
-    return
-  end
+	local c_file = io.open(c_filepath, "w")
+	if c_file then
+		c_file:write(c_template)
+		c_file:close()
+		print("C template created at " .. c_filepath)
+	else
+		print("Error creating file: " .. c_filepath)
+		return
+	end
 
-  -- Create a Makefile with build instructions.
-  local make_filepath = target_dir .. "/Makefile"
-  local make_template = "all:\n\tclang -o main main.c\n\t./main\n"
-  local make_file = io.open(make_filepath, "w")
-  if make_file then
-    make_file:write(make_template)
-    make_file:close()
-    print("Makefile created at " .. make_filepath)
-  else
-    print("Error creating file: " .. make_filepath)
-  end
+	-- Create a Makefile with build instructions.
+	local make_filepath = target_dir .. "/Makefile"
+	local make_template = "all:\n\tclang -o main main.c\n\t./main\n"
+	local make_file = io.open(make_filepath, "w")
+	if make_file then
+		make_file:write(make_template)
+		make_file:close()
+		print("Makefile created at " .. make_filepath)
+	else
+		print("Error creating file: " .. make_filepath)
+	end
 
-  -- Open main.c in Neovim.
-  vim.cmd("edit " .. c_filepath)
+	-- Open main.c in Neovim.
+	vim.cmd("edit " .. c_filepath)
 end
 
 -- Map the function to a keybinding (<leader>ot).
 vim.api.nvim_set_keymap("n", "<leader>ot", "", { callback = create_c_template, noremap = true, silent = true })
+
+-- In Neovim, in Lua, create a normal mode keybinding 'f'. It will visually highlight the current line and yank it's contents (or if theres a better way, do it that way). I want to process the yanked line. I want you to left strip and right strip whitespace. I want you to escape every space.
+-- then after processing I want you to set the string as the makeprg command
+
+-- here's an example of something similar:
+
+-- vim.api.nvim_set_keymap(
+-- 	"v",
+-- 	"<leader>m",
+-- 	[[:lua SetMakePrgFromVisualSelection()<CR>]],
+-- 	{ noremap = true, silent = true }
+-- )
+
+-- function SetMakePrgFromVisualSelection()
+-- 	-- Use vim.cmd to enter normal mode to get visual selection
+-- 	vim.cmd("normal! `<v`>y") -- Yank visually selected text into register
+-- 	local selected_text = vim.fn.getreg('"') -- Get the yanked text from unnamed register
+
+-- 	-- Escape spaces in the selected text
+-- 	local escaped_text = selected_text:gsub(" ", "\\ ")
+
+-- 	-- Use vim.cmd to set the makeprg
+-- 	vim.cmd("setlocal makeprg=" .. escaped_text)
+
+-- 	-- Print confirmation
+-- 	print("makeprg set to: " .. escaped_text)
+-- end
+
+-- vim.api.nvim_set_keymap('n', 'f', [[:lua ProcessAndSetMakeprg()<CR>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "f", [[:lua ProcessAndSetMakeprg()<CR>]], { noremap = true, silent = true })
+
+function ProcessAndSetMakeprg()
+	local line = vim.api.nvim_get_current_line()
+	vim.api.nvim_buf_add_highlight(0, -1, "Visual", vim.fn.line(".") - 1, 0, -1)
+
+	-- local processed_line = line:match("^%s*(.-)%s*$"):gsub(" ", "\\ ")
+	local processed_line = line
+
+	vim.opt.makeprg = processed_line
+
+	print("makeprg set to: " .. processed_line)
+
+	vim.defer_fn(function()
+		vim.api.nvim_buf_clear_namespace(0, -1, vim.fn.line(".") - 1, vim.fn.line("."))
+	end, 500)
+end
