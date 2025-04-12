@@ -1523,7 +1523,7 @@ function ProcessAndSetMakeprg()
 	vim.api.nvim_buf_add_highlight(0, -1, "Visual", vim.fn.line(".") - 1, 0, -1)
 
 	-- local processed_line = line:match("^%s*(.-)%s*$"):gsub(" ", "\\ ")
-	local processed_line = line
+	local processed_line = line:gsub("^%s*[#%-/]+%s*","")
 
 	vim.opt.makeprg = processed_line
 
