@@ -1488,34 +1488,6 @@ end
 -- Map the function to a keybinding (<leader>ot).
 vim.api.nvim_set_keymap("n", "<leader>ot", "", { callback = create_c_template, noremap = true, silent = true })
 
--- In Neovim, in Lua, create a normal mode keybinding 'f'. It will visually highlight the current line and yank it's contents (or if theres a better way, do it that way). I want to process the yanked line. I want you to left strip and right strip whitespace. I want you to escape every space.
--- then after processing I want you to set the string as the makeprg command
-
--- here's an example of something similar:
-
--- vim.api.nvim_set_keymap(
--- 	"v",
--- 	"<leader>m",
--- 	[[:lua SetMakePrgFromVisualSelection()<CR>]],
--- 	{ noremap = true, silent = true }
--- )
-
--- function SetMakePrgFromVisualSelection()
--- 	-- Use vim.cmd to enter normal mode to get visual selection
--- 	vim.cmd("normal! `<v`>y") -- Yank visually selected text into register
--- 	local selected_text = vim.fn.getreg('"') -- Get the yanked text from unnamed register
-
--- 	-- Escape spaces in the selected text
--- 	local escaped_text = selected_text:gsub(" ", "\\ ")
-
--- 	-- Use vim.cmd to set the makeprg
--- 	vim.cmd("setlocal makeprg=" .. escaped_text)
-
--- 	-- Print confirmation
--- 	print("makeprg set to: " .. escaped_text)
--- end
-
--- vim.api.nvim_set_keymap('n', 'f', [[:lua ProcessAndSetMakeprg()<CR>]], { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "f", [[:lua ProcessAndSetMakeprg()<CR>]], { noremap = true, silent = true })
 
 function ProcessAndSetMakeprg()
