@@ -1505,3 +1505,60 @@ function ProcessAndSetMakeprg()
 		vim.api.nvim_buf_clear_namespace(0, -1, vim.fn.line(".") - 1, vim.fn.line("."))
 	end, 500)
 end
+
+
+-- Helper function to sanitize the dispatch command for safe filename usage.
+local function sanitize_command(cmd)
+  -- Remove any leading colon and whitespace.
+  local sanitized = cmd:gsub("^:%s*", "")
+  -- Remove the "Dispatch " prefix.
+  sanitized = sanitized:gsub("^Dispatch%s+", "")
+  -- Remove any substring in parentheses (e.g., " (neovim/3349296)").
+  sanitized = sanitized:gsub("%s*%([^)]*%)", "")
+  -- Replace spaces with underscores.
+  sanitized = sanitized:gsub("%s+", "_")
+  -- Replace any slashes with underscores.
+  sanitized = sanitized:gsub("[/\\]", "_")
+  return sanitized
+end
+
+-- Global function to save the quickfix list to a file.
+_G.save_quickfix_to_file = function()
+  -- Retrieve the quickfix title and items.
+  local qf_info = vim.fn.getqflist({ title = 0, items = 0 })
+  local title = qf_info.title or "quickfix"
+  
+  -- Sanitize the dispatch command; if it ends up empty, default to "quickfix".
+  local command = sanitize_command(title)
+  if command == "" then
+    command = "quickfix"
+  end
+  
+  -- Get the current Unix timestamp.
+  local timestamp = tostring(os.time())
+  -- Build the filename in the format: timestamp_command.txt
+  local filename = string.format("%s_%s.txt", timestamp, command)
+  
+  -- Determine the output directory using the home directory.
+  local home_dir = vim.fn.expand("~/")
+  if home_dir == "" then
+    home_dir = "/tmp/"
+  end
+  if home_dir:sub(-1) ~= "/" then
+    home_dir = home_dir .. "/"
+  end
+  local output_file = home_dir .. filename
+
+  -- Build the list of quickfix items.
+  local lines = {}
+  for _, item in ipairs(qf_info.items) do
+    table.insert(lines, item.text or "")
+  end
+
+  -- Write the contents to the generated file.
+  vim.fn.writefile(lines, output_file)
+  print("Quickfix list saved to " .. output_file)
+end
+
+-- Bind the global function to <leader>S in normal mode.
+vim.api.nvim_set_keymap("n", "<leader>S", "<cmd>lua save_quickfix_to_file()<CR>", { noremap = true, silent = true })
