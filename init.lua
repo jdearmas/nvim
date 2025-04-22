@@ -607,8 +607,8 @@ require('lazy').setup({
     vim.g.floaterm_height = 0.95
   end },
   { 'mtikekar/nvim-send-to-term'},
-  { 'tpope/vim-dispatch', cmd = { 'Dispatch', 'Make', 'Focus', 'Start' } }, -- Load on command
-  { 'radenling/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' }, lazy = true }, -- Load when dispatch is loaded
+  { 'tpope/vim-dispatch' }, -- Load on command
+  { 'radenling/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' } }, -- Load when dispatch is loaded
 
   -- Filetype Specific
   { 'mattn/emmet-vim', ft = { 'html', 'css', 'javascript', 'typescript', 'jsx', 'tsx' } }, -- Load for specific filetypes
