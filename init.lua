@@ -1075,23 +1075,35 @@ map('n', '<leader>r', ':only<CR>', opts) -- Close all other windows
 map('n', '<leader><leader>', ':w!<CR>', opts) -- Quick save
 map('n', '<leader>D', ':bd!<CR>', opts) -- Force delete buffer
 map('n', '<leader>c', ':close<CR>', opts) -- Close current window
-map('n', '<leader>Q', function() -- Save & close all undisplayed buffers
-  local displayed_buffers = {}
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    displayed_buffers[vim.api.nvim_win_get_buf(win)] = true
-  end
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if not displayed_buffers[buf] and vim.api.nvim_buf_is_loaded(buf) then
-      local info = vim.fn.getbufinfo(buf)[1]
-      if info and info.listed and info.buftype == '' then -- Check if it's a normal, listed buffer
-        if info.changed == 1 and info.name ~= '' then
-          pcall(vim.api.nvim_buf_call, buf, function() vim.cmd 'silent! write' end)
-        end
-        pcall(vim.api.nvim_buf_delete, buf, { force = true })
-      end
-    end
-  end
-end, { desc = 'Save & Close Undisplayed Buffers' })
+
+vim.keymap.set("n", "<leader>Q", function()
+	-- Gather buffers displayed in any window
+	local displayed_buffers = {}
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		displayed_buffers[vim.api.nvim_win_get_buf(win)] = true
+	end
+
+	-- Iterate over all buffers
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if not displayed_buffers[buf] then
+			local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+			local modifiable = vim.api.nvim_buf_get_option(buf, "modifiable")
+			local modified = vim.api.nvim_buf_get_option(buf, "modified")
+			local name = vim.api.nvim_buf_get_name(buf)
+
+			-- If it's a modifiable text buffer with a filename and unsaved changes, save it
+			if modifiable and modified and buftype == "" and name ~= "" then
+				vim.api.nvim_buf_call(buf, function()
+					vim.cmd("silent! write")
+				end)
+			end
+
+			-- Delete the buffer (including terminal or unnamed buffers)
+			pcall(vim.api.nvim_buf_delete, buf, { force = true })
+		end
+	end
+end, { desc = "Save & close all undisplayed buffers" })
+
 map('n', '<leader>=', ':%!jq .<CR>', { noremap = true, desc = 'Format JSON with jq' }) -- Requires jq
 map('n', '7', '<C-w>=', { desc = 'Equalize window sizes' })
 
