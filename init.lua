@@ -489,6 +489,13 @@ require('lazy').setup({
 
   -- File Explorer / Fuzzy Finder
   {
+    "MattesGroeger/vim-bookmarks",
+    config = function()
+      vim.g.bookmark_sign = "⚑"
+      vim.g.bookmark_highlight_lines = 1
+    end,
+	},
+  {
     'nvim-telescope/telescope.nvim',
     cmd = 'Telescope', -- Load when :Telescope is called
     dependencies = {
