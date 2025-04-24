@@ -1306,7 +1306,7 @@ require("no-neck-pain").setup({
 			enabled = false,
 			-- set to `nil` to default
 			-- to current working directory
-			location = "~/Documents/",
+			location = nil,
 		},
 		bo = {
 			filetype = "md",
@@ -1314,6 +1314,11 @@ require("no-neck-pain").setup({
 	},
 })
 
+-- Configure 'makeprg' for Rust
+vim.cmd([[
+autocmd FileType rust setlocal makeprg=cargo\ run
+]])
+-- autocmd FileType rust setlocal errorformat=%f:%l:\ %m
  
 
 print 'speed is life' -- Confirmation message
