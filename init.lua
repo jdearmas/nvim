@@ -21,6 +21,7 @@ end
 vim.opt.rtp:prepend(lazypath) -- Add lazy.nvim to the runtime path
 
 -- [[ Basic Neovim settings ]]
+vim.o.laststatus = 2  -- 2 = always show, 3 = global statusline
 vim.opt.termguicolors = true -- Enable true color support
 vim.opt.number = true -- Show absolute line numbers
 vim.opt.relativenumber = true -- Show relative line numbers
@@ -51,7 +52,6 @@ vim.opt.timeoutlen = 300 -- Lower timeout for key sequences
 vim.opt.list = true -- Show invisible characters
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 vim.opt.fillchars = { eob = ' ' } -- Don't show '~' on empty lines
-vim.opt.laststatus = 3 -- Global statusline
 vim.opt.showmode = false -- Don't show mode in command line (status line usually does)
 vim.opt.scrollback = 100000 -- Increase terminal scrollback buffer size
 
@@ -62,6 +62,7 @@ vim.api.nvim_set_hl(0, 'Normal', { bg = '#000000', fg = '#00FF00' }) -- Example 
 vim.api.nvim_set_hl(0, 'NormalFloat', { link = 'Normal' })
 vim.api.nvim_set_hl(0, 'Folded', { bg = 'none' })
 vim.api.nvim_set_hl(0, 'SignColumn', { link = 'Normal' }) -- Avoid distracting sign column background
+
 
 -- fix
 -- vim.api.nvim_set_hl(0, 'CustomVertSplit', { guibg = 'green' }) -- Example custom highlight
@@ -777,7 +778,7 @@ function _G.ToggleQuickFix()
   if is_open then
     vim.cmd 'cclose'
   else
-    vim.cmd 'copen'
+    vim.cmd 'copen 50'
   end
 end
 
@@ -921,8 +922,9 @@ _G.save_quickfix_to_file = function()
   local command = sanitize_command(title)
   local timestamp = os.time()
   local filename = string.format('%s_%s.txt', timestamp, command)
-  local home_dir = vim.fn.expand '~/' -- Ensure trailing slash
-  local output_file = home_dir .. filename
+  -- local home_dir = vim.fn.expand '~/' -- Ensure trailing slash
+  local current_dir = vim.fn.expand './' -- Ensure trailing slash
+  local output_file = current_dir .. filename
 
   local lines = {}
   for _, item in ipairs(qf_info.items) do
@@ -1237,6 +1239,7 @@ vim.api.nvim_set_keymap('n', 'N', 'Nzzzv', { noremap = true, silent = true })
 
 -- Remove or fix potentially conflicting/unused maps
 -- map('v', 'n', '<C-y,', {}) -- What was this intended for? Removing for now.
+vim.api.nvim_set_keymap("v", "n", "<C-y>,", {})
 --
 --
 require("fine-cmdline").setup({
@@ -1306,7 +1309,7 @@ require("no-neck-pain").setup({
 			enabled = false,
 			-- set to `nil` to default
 			-- to current working directory
-			location = nil,
+			location = "~/Documents/",
 		},
 		bo = {
 			filetype = "md",
@@ -1318,8 +1321,6 @@ require("no-neck-pain").setup({
 vim.cmd([[
 autocmd FileType rust setlocal makeprg=cargo\ run
 ]])
--- autocmd FileType rust setlocal errorformat=%f:%l:\ %m
- 
 
 print 'speed is life' -- Confirmation message
 
