@@ -1007,7 +1007,8 @@ end
 function _G.ProcessAndSetMakeprg()
   local line = vim.api.nvim_get_current_line()
   -- Extract command after comment marker (more robust)
-  local processed_line = line:match('^%s*[%-%/*#]+%s*(.*)') -- Match common comment chars
+  local processed_line = line:match('^%s*[%-%/*#$]+%s*(.*)') -- Match common comment chars
+
   if not processed_line then
     processed_line = line:match('^%s*(.*)') -- Fallback: use whole line if no comment marker found
   end
