@@ -39,8 +39,6 @@ vim.opt.expandtab = true -- Use spaces instead of tabs
 vim.opt.softtabstop = 2 -- Number of spaces that a <Tab> counts for while performing editing operations
 vim.opt.autoindent = true -- Copy indent from current line when starting a new line
 vim.opt.autochdir = true -- Automatically change directory to the file's directory (Consider potential side effects)
-vim.opt.scrolloff = 8 -- Keep 8 lines visible above/below the cursor
-vim.opt.sidescrolloff = 8 -- Keep 8 columns visible left/right of the cursor
 vim.opt.foldmethod = 'indent' -- Fold based on indentation
 vim.opt.foldlevelstart = 99 -- Start with most folds open
 vim.opt.foldenable = true -- Enable folding
@@ -616,7 +614,7 @@ require('lazy').setup({
   end },
   { 'mtikekar/nvim-send-to-term'},
   { 'tpope/vim-dispatch' }, -- Load on command
-  { 'radenling/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' } }, -- Load when dispatch is loaded
+  { 'jdearmas/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' } }, -- Load when dispatch is loaded
 
   -- Filetype Specific
   { 'mattn/emmet-vim', ft = { 'html', 'css', 'javascript', 'typescript', 'jsx', 'tsx' } }, -- Load for specific filetypes
@@ -940,7 +938,7 @@ _G.save_quickfix_to_file = function()
 end
 
 -- Function for C template creation
-local function create_c_template()
+function create_c_template()
   local dir = vim.fn.input 'Enter directory name for C project: '
   if dir == '' then
     print 'No directory entered.'
