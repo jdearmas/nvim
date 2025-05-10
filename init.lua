@@ -1,5 +1,5 @@
 -- ~/.config/nvim/init.lua
-
+--
 -- Set <space> as the leader key
 -- Must be set before lazy.nvim setup
 vim.g.mapleader = ' '
@@ -613,25 +613,18 @@ require('lazy').setup({
     vim.g.floaterm_height = 0.95
   end },
   { 'mtikekar/nvim-send-to-term'},
+
   { 'tpope/vim-dispatch' }, -- Load on command
+  {'kevinhwang91/nvim-bqf'},
   { 'jdearmas/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' } }, -- Load when dispatch is loaded
 
   -- Filetype Specific
   { 'mattn/emmet-vim', ft = { 'html', 'css', 'javascript', 'typescript', 'jsx', 'tsx' } }, -- Load for specific filetypes
   { 'ray-x/go.nvim', dependencies = { 'ray-x/guihua.lua', 'neovim/nvim-lspconfig', 'nvim-treesitter/nvim-treesitter' }, ft = { 'go', 'gomod' }, build = ':lua require("go.install").update_all_sync()', -- build step
     config = function() require('go').setup() end },
-  { 'nvim-orgmode/orgmode', ft = 'org', dependencies = { { 'nvim-treesitter/nvim-treesitter', lazy = true } }, config = function() require('orgmode').setup {
-    org_agenda_files = { '~/org/**/*' }, -- Adjust path
-    org_default_notes_file = '~/org/todo.org', -- Adjust path
-    org_todo_keywords = { 'TODO', '|', 'DONE', 'FAILED' },
-    -- Add orgmode keymaps here if desired
-    -- Example:
-    -- org_mappings = {
-    --   global = { ['<leader>oa'] = require('orgmode').action('org_agenda') },
-    -- }
-  } end },
 
-  -- Utilities
+
+    -- Utilities
   { 'tpope/vim-commentary', event = 'VeryLazy' }, -- Basic commenting, load late
   { 'mbbill/undotree', cmd = 'UndotreeToggle' }, -- Load on command
   { 'sbdchd/neoformat', cmd = 'Neoformat', event = 'BufWritePre' }, -- Load on command or before writing
@@ -642,6 +635,17 @@ require('lazy').setup({
   -- Task Runner Integration
   { 'stevearc/overseer.nvim', cmd = { 'OverseerRun', 'OverseerToggle' }, config = true },
   { 'pianocomposer321/officer.nvim', dependencies = 'stevearc/overseer.nvim', cmd = 'Officer', config = function() require('officer').setup() end },
+
+  {
+    'nvim-orgmode/orgmode',
+    lazy = true,
+    ft = 'org',
+    opts = {
+      org_agenda_files = { '~/org/*', '~/orgs/**/*' },
+      org_default_notes_file = '~/org/note.org',
+    },
+  }
+
 })
 
 -- [[ Autocommands ]]
@@ -722,35 +726,6 @@ autocmd('BufNewFile', {
   desc = 'Ensure directory exists for new files',
 })
 
--- LSP Hover customization (if desired, affects all LSPs)
--- vim.lsp.handlers['textDocument/hover'] = vim.lsp.with(vim.lsp.handlers.hover, {
---   border = 'rounded',
---   focusable = false,
---   -- anchor = 'NW', -- Experiment with positioning
---   -- relative = 'cursor',
---   -- row = -2,
---   -- col = 10,
--- })
-
--- Auto-show hover on completion selection (Can be slightly noisy/slow)
--- autocmd('CompleteChanged', {
---   group = user_augroup,
---   callback = function()
---     local item = vim.fn.complete_info({ 'selected' }).selected
---     if item ~= -1 then
---       vim.lsp.buf.hover()
---     end
---   end,
---   desc = "Show hover on completion item change"
--- })
--- autocmd('CompleteDone', {
---   group = user_augroup,
---   callback = function()
---     vim.lsp.buf.hover()
---   end,
---   desc = "Show hover when completion is done"
--- })
-
 
 -- [[ Functions ]]
 
@@ -776,7 +751,9 @@ function _G.ToggleQuickFix()
   if is_open then
     vim.cmd 'cclose'
   else
-    vim.cmd 'copen 50'
+    -- vim.cmd 'copen 50'
+    local height = math.floor(vim.o.lines * 0.5)
+    vim.cmd('copen ' .. height)
   end
 end
 
@@ -1321,6 +1298,8 @@ vim.cmd([[
 autocmd FileType rust setlocal makeprg=cargo\ run
 ]])
 
+
+-- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
 
 
