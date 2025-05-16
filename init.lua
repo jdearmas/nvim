@@ -1250,7 +1250,25 @@ autocmd FileType rust setlocal makeprg=cargo\ run
 ]])
 
 
+vim.filetype.add({
+  extension = {
+    http = "http",
+  },
+})
+
+vim.api.nvim_set_keymap("n", "<leader>G", "", {
+	noremap = true,
+	silent = true,
+	callback = function()
+		require("orgmode").action("org_mappings.insert_todo_heading_respect_content")
+		require("orgmode").action("org_mappings.do_demote")
+	end,
+})
+
+
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
+
+
 
 
