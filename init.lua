@@ -245,12 +245,6 @@ require('lazy').setup({
 
   -- LSP & Completion Engine
   {
-		"VonHeikemen/fine-cmdline.nvim",
-		dependencies = {
-			{ "MunifTanjim/nui.nvim" },
-		},
-	},
-  {
     'VonHeikemen/lsp-zero.nvim',
     branch = 'v4.x',
     dependencies = {
@@ -596,16 +590,9 @@ require('lazy').setup({
   -- { 'chrisbra/Colorizer', event = 'BufReadPost', config = true }, -- Load after buffer read
 
   -- Command Line / Terminal
-  { 'VonHeikemen/fine-cmdline.nvim', dependencies = { 'MunifTanjim/nui.nvim' }, event = 'CmdlineEnter', config = function() require('fine-cmdline').setup { -- Your existing fine-cmdline config
+  { 'VonHeikemen/fine-cmdline.nvim', dependencies = { 'MunifTanjim/nui.nvim' },  config = function() require('fine-cmdline').setup { -- Your existing fine-cmdline config
     cmdline = { enable_keymaps = true, smart_history = true, prompt = ': ' },
     popup = { position = { row = '50%', col = '50%' }, size = { width = '60%' }, border = { style = 'rounded' }, win_options = { winhighlight = 'Normal:Normal,FloatBorder:FloatBorder' } },
-    hooks = { set_keymaps = function(imap, feedkeys)
-      local fn = require 'fine-cmdline.fn'
-      imap('<M-k>', fn.up_search_history)
-      imap('<M-j>', fn.down_search_history)
-      imap('<Up>', fn.up_history)
-      imap('<Down>', fn.down_history)
-    end },
   } end },
   { 'chomosuke/term-edit.nvim', version = '1.*', event = 'TermOpen', -- Load when a terminal opens
     config = function() require('term-edit').setup { prompt_end = { '%$ ', '> ' } } end },
@@ -1216,42 +1203,6 @@ vim.api.nvim_set_keymap("v", "n", "<C-y>,", {})
 -- Unset the keybinding
 vim.api.nvim_del_keymap('n', 'n')
 vim.api.nvim_del_keymap('n', 'N')
---
---
-require("fine-cmdline").setup({
-	cmdline = {
-		enable_keymaps = true,
-		smart_history = true,
-		prompt = ": ",
-	},
-	popup = {
-		position = {
-			row = "50%",
-			col = "50%",
-		},
-		size = {
-			width = "60%",
-		},
-		border = {
-			style = "rounded",
-		},
-		win_options = {
-			winhighlight = "Normal:Normal,FloatBorder:FloatBorder",
-		},
-	},
-	hooks = {
-		before_mount = function(input)
-			-- code
-		end,
-		after_mount = function(input)
-			-- code
-		end,
-		set_keymaps = function(imap, feedkeys)
-			-- code
-		end,
-	},
-})
-
 
 -- Add this to your Neovim configuration file (e.g., init.lua)
 
