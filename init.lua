@@ -1202,7 +1202,7 @@ vim.api.nvim_set_keymap("v", "n", "<C-y>,", {})
 
 -- Unset the keybinding
 vim.api.nvim_del_keymap('n', 'n')
-vim.api.nvim_del_keymap('n', 'N')
+-- vim.api.nvim_del_keymap('n', 'N')
 
 -- Add this to your Neovim configuration file (e.g., init.lua)
 
