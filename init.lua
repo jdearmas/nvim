@@ -52,6 +52,7 @@ vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 vim.opt.fillchars = { eob = ' ' } -- Don't show '~' on empty lines
 vim.opt.showmode = false -- Don't show mode in command line (status line usually does)
 vim.opt.scrollback = 100000 -- Increase terminal scrollback buffer size
+vim.opt.diffopt:append("vertical")
 
 -- Set background color (important for some themes/highlighting)
 vim.cmd [[set background=dark]]
@@ -642,7 +643,7 @@ require('lazy').setup({
     ft = 'org',
     opts = {
       org_agenda_files = { '~/org/*', '~/orgs/**/*' },
-      org_default_notes_file = '~/org/note.org',
+      org_default_notes_file = '~/org/todo.org',
     },
   }
 
@@ -1207,15 +1208,14 @@ map('i', 'hu', '<esc>', opts) -- Escape from insert mode (duplicate?)
 
 map('n', 'n', '<cmd>FineCmdline<CR>', { noremap = true })
 
--- Set 'n' to perform next search
-vim.api.nvim_set_keymap('n', 'n', 'nzzzv', { noremap = true, silent = true })
-
--- Set 'N' to perform previous search
-vim.api.nvim_set_keymap('n', 'N', 'Nzzzv', { noremap = true, silent = true })
-
 -- Remove or fix potentially conflicting/unused maps
 -- map('v', 'n', '<C-y,', {}) -- What was this intended for? Removing for now.
 vim.api.nvim_set_keymap("v", "n", "<C-y>,", {})
+
+
+-- Unset the keybinding
+vim.api.nvim_del_keymap('n', 'n')
+vim.api.nvim_del_keymap('n', 'N')
 --
 --
 require("fine-cmdline").setup({
