@@ -415,7 +415,7 @@ require('lazy').setup({
           'make',
           'markdown',
           'markdown_inline',
-          'norg', -- If you use norg
+          -- 'norg', -- If you use norg
           'python',
           'query',
           'regex',
@@ -855,7 +855,9 @@ function _G.surround_visual_with_org_block()
   end
 
   local start_block = '#+begin_' .. block_type
-  local end_block = '#+end_' .. block_type
+
+  local block_type_tokens = block_type:match("%S+")
+  local end_block = '#+end_' .. block_type_tokens
 
   local indent_str = vim.fn.matchstr(vim.api.nvim_buf_get_lines(0, start_line_num - 1, start_line_num, false)[1], '^%s*')
 
