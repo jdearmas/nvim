@@ -1249,7 +1249,6 @@ vim.cmd([[
 autocmd FileType rust setlocal makeprg=cargo\ run
 ]])
 
-
 vim.filetype.add({
   extension = {
     http = "http",
@@ -1265,6 +1264,14 @@ vim.api.nvim_set_keymap("n", "<leader>G", "", {
 	end,
 })
 
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "qf",
+  callback = function()
+    local height = math.floor(vim.o.lines / 2)
+    vim.cmd(height .. "wincmd _") -- resize to half the screen
+  end,
+})
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
