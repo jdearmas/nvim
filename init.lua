@@ -21,6 +21,7 @@ end
 vim.opt.rtp:prepend(lazypath) -- Add lazy.nvim to the runtime path
 
 -- [[ Basic Neovim settings ]]
+vim.o.hidden = true
 vim.o.laststatus = 2  -- 2 = always show, 3 = global statusline
 vim.opt.termguicolors = true -- Enable true color support
 vim.opt.number = true -- Show absolute line numbers
@@ -502,6 +503,11 @@ require('lazy').setup({
     config = function()
       local telescope = require 'telescope'
       telescope.setup {
+        buffers = {
+          show_all_buffers = true,
+          sort_mru = true,
+          ignore_current_buffer = true,
+        },
         defaults = {
           layout_strategy = 'horizontal',
           layout_config = {
