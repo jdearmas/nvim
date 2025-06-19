@@ -630,15 +630,160 @@ require('lazy').setup({
   { 'stevearc/overseer.nvim', cmd = { 'OverseerRun', 'OverseerToggle' }, config = true },
   { 'pianocomposer321/officer.nvim', dependencies = 'stevearc/overseer.nvim', cmd = 'Officer', config = function() require('officer').setup() end },
 
-  {
-    'nvim-orgmode/orgmode',
-    lazy = true,
-    ft = 'org',
-    opts = {
-      org_agenda_files = { '~/org/*', '~/orgs/**/*' },
-      org_default_notes_file = '~/org/todo.org',
-    },
-  }
+  
+
+
+
+{
+  'nvim-orgmode/orgmode',
+  lazy = true,
+  ft = 'org',
+  opts = {
+    org_agenda_files       = { '~/org/*', '~/orgs/**/*' },
+    org_default_notes_file = '~/org/todo.org',
+  },
+  config = function(_, opts)
+    -- Initialize Orgmode
+    require('orgmode').setup(opts)
+
+    local uv = vim.loop
+
+    -- Format elapsed nanoseconds into H:MM:SS.mmm or MM:SS.mmm
+    local function format_elapsed_ns(ns)
+      local total_ms = ns / 1e6
+      local total_sec = math.floor(total_ms / 1000)
+      local ms = math.floor(total_ms % 1000)
+      local h = math.floor(total_sec / 3600)
+      local m = math.floor((total_sec % 3600) / 60)
+      local s = total_sec % 60
+      if h > 0 then
+        return string.format('%d:%02d:%02d.%03d', h, m, s, ms)
+      else
+        return string.format('%02d:%02d.%03d', m, s, ms)
+      end
+    end
+
+    -- Statusline wrapper that auto-stops when no CLOCK entry is open
+    function _G.OrgmodeStatuslineWithTimer()
+      if not _G.orgmode or type(_G.orgmode.statusline) ~= 'function' then
+        return ''
+      end
+      local base = _G.orgmode.statusline()
+
+      -- Check if any CLOCK entry is open
+      local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+      local has_clock = false
+      for _, line in ipairs(lines) do
+        if line:match('CLOCK:%s*%[') and not line:find('%-%-') then
+          has_clock = true
+          break
+        end
+      end
+      if not has_clock then
+        -- clear buffer variables
+        vim.b.org_clock_start_time = nil
+        vim.b.org_clock_start_hr   = nil
+        vim.b.org_clock_header     = nil
+        return base
+      end
+
+      -- Initialize timestamp and header if not already set
+      if not vim.b.org_clock_start_time then
+        for idx, line in ipairs(lines) do
+          local y,m,d,hh,mm = line:match('CLOCK:%s*%[(%d+)%-(%d+)%-(%d+) [^ ]+ (%d+):(%d+)%]')
+          if y and not line:find('%-%-') then
+            -- Store start time
+            local ts = os.time{
+              year = tonumber(y), month = tonumber(m), day = tonumber(d),
+              hour = tonumber(hh), min = tonumber(mm), sec = 0,
+            }
+            vim.b.org_clock_start_time = ts
+            -- High-resolution base time
+            local now_hr = uv.hrtime()
+            local elapsed_sec = os.time() - ts
+            vim.b.org_clock_start_hr = now_hr - (elapsed_sec * 1e9)
+            -- Capture the nearest headline above the CLOCK entry
+            for i = idx, 1, -1 do
+              local title = lines[i]:match('^%*+%s+(.*)')
+              if title then
+                vim.b.org_clock_header = title
+                break
+              end
+            end
+            break
+          end
+        end
+      end
+
+      -- Append timer, start timestamp, and header
+      local ts     = vim.b.org_clock_start_time
+      local hr     = vim.b.org_clock_start_hr
+      local header = vim.b.org_clock_header or ''
+      if ts and hr then
+        local elapsed_ns = uv.hrtime() - hr
+        base = base .. ' [' .. format_elapsed_ns(elapsed_ns) .. ']'
+        base = base .. ' @ ' .. os.date('%Y-%m-%d %H:%M:%S', ts)
+        if header ~= '' then
+          base = base .. ' - ' .. header
+        end
+      end
+      return base
+    end
+
+    -- Apply in Org buffers: statusline, redraw timer, and control timer on buffer enter/leave
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'org',
+      callback = function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.opt_local.statusline = '%!v:lua.OrgmodeStatuslineWithTimer()'
+
+        -- Timer variable in closure
+        local timer
+        -- Function to start or restart the timer
+        local function start_timer()
+          if timer and not timer:is_closing() then return end
+          timer = uv.new_timer()
+          timer:start(0, 50, vim.schedule_wrap(function()
+            -- Only redraw if this buffer is current
+            if vim.api.nvim_buf_is_valid(bufnr) and bufnr == vim.api.nvim_get_current_buf() then
+              vim.api.nvim_buf_call(bufnr, function()
+                vim.cmd('redrawstatus')
+              end)
+            end
+          end))
+        end
+        -- Function to stop and close the timer
+        local function stop_timer()
+          if timer and not timer:is_closing() then
+            timer:stop()
+            timer:close()
+            timer = nil
+          end
+        end
+
+        -- Start initially
+        start_timer()
+        -- Stop on leaving the buffer
+        vim.api.nvim_create_autocmd({'BufLeave','BufHidden','BufUnload'}, {
+          buffer = bufnr,
+          callback = stop_timer,
+        })
+        -- Restart on entering the buffer
+        vim.api.nvim_create_autocmd('BufEnter', {
+          buffer = bufnr,
+          callback = function()
+            if vim.api.nvim_get_current_buf() == bufnr then
+              start_timer()
+            end
+          end,
+        })
+      end,
+    })
+  end,
+}
+
+
+
 
 })
 
