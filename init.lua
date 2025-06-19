@@ -54,6 +54,7 @@ vim.opt.fillchars = { eob = ' ' } -- Don't show '~' on empty lines
 vim.opt.showmode = false -- Don't show mode in command line (status line usually does)
 vim.opt.scrollback = 100000 -- Increase terminal scrollback buffer size
 vim.opt.diffopt:append("vertical")
+vim.opt.smartindent = true
 
 -- Set background color (important for some themes/highlighting)
 vim.cmd [[set background=dark]]
@@ -607,7 +608,14 @@ require('lazy').setup({
     vim.g.floaterm_height = 0.95
   end },
   { 'mtikekar/nvim-send-to-term'},
-
+  {'mrcjkb/rustaceanvim'},
+  {
+	  'windwp/nvim-autopairs',
+	  event = "InsertEnter",
+	  config = true
+	  -- use opts = {} for passing setup options
+	  -- this is equivalent to setup({}) function
+  },
   { 'tpope/vim-dispatch' }, -- Load on command
   {'kevinhwang91/nvim-bqf'},
   { 'jdearmas/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' } }, -- Load when dispatch is loaded
