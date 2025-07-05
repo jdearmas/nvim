@@ -582,6 +582,21 @@ require('lazy').setup({
   -- UI Enhancements & Helpers
   { 'lukas-reineke/indent-blankline.nvim', main = 'ibl', event = 'BufReadPost', config = function() require('ibl').setup() end }, -- Load after buffer read
   { 'folke/which-key.nvim', event = 'VeryLazy', config = function() require('which-key').setup() end }, -- Load very late
+    {
+    "nvim-orgmode/telescope-orgmode.nvim",
+    -- event = "VeryLazy",
+    dependencies = {
+      "nvim-orgmode/orgmode",
+      "nvim-telescope/telescope.nvim",
+    },
+    config = function()
+      require("telescope").load_extension("orgmode")
+
+      vim.keymap.set("n", "<leader>r", require("telescope").extensions.orgmode.refile_heading)
+      vim.keymap.set("n", "<leader>fh", require("telescope").extensions.orgmode.search_headings)
+      vim.keymap.set("n", "<leader>li", require("telescope").extensions.orgmode.insert_link)
+    end,
+  },
   { 'stevearc/aerial.nvim', event = 'BufReadPost', dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, config = function() require('aerial').setup { -- Your existing aerial config goes here (abbreviated)
     backends = { 'treesitter', 'lsp', 'markdown', 'asciidoc', 'man' },
     layout = { max_width = { 0.9 }, min_width = 0.6, default_direction = 'float' },
@@ -1433,6 +1448,18 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.cmd(height .. "wincmd _") -- resize to half the screen
   end,
 })
+
+vim.keymap.set("n", "<leader>fh", require("telescope").extensions.orgmode.search_headings)
+
+-- Search headlines in current file only
+vim.keymap.set(
+  "n",
+  "<Leader>ofc",
+  function()
+    require('telescope').extensions.orgmode.search_headings({ only_current_file = true })
+  end,
+  { desc = "Find headlines in current file"}
+)
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
