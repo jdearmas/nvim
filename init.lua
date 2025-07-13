@@ -597,7 +597,7 @@ require('lazy').setup({
       vim.keymap.set("n", "<leader>li", require("telescope").extensions.orgmode.insert_link)
     end,
   },
-  { 'stevearc/aerial.nvim', event = 'BufReadPost', dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, config = function() require('aerial').setup { -- Your existing aerial config goes here (abbreviated)
+  { 'stevearc/aerial.nvim', commit='8c63f41c13d250faeb3c848b61b06adedac737e5', event = 'BufReadPost', dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, config = function() require('aerial').setup { -- Your existing aerial config goes here (abbreviated)
     backends = { 'treesitter', 'lsp', 'markdown', 'asciidoc', 'man' },
     layout = { max_width = { 0.9 }, min_width = 0.6, default_direction = 'float' },
     filter_kind = { 'Class', 'Constructor', 'Enum', 'Function', 'Interface', 'Module', 'Method', 'Struct' },
@@ -637,15 +637,15 @@ require('lazy').setup({
 
   -- Filetype Specific
   { 'mattn/emmet-vim', ft = { 'html', 'css', 'javascript', 'typescript', 'jsx', 'tsx' } }, -- Load for specific filetypes
-  { 'ray-x/go.nvim', dependencies = { 'ray-x/guihua.lua', 'neovim/nvim-lspconfig', 'nvim-treesitter/nvim-treesitter' }, ft = { 'go', 'gomod' }, build = ':lua require("go.install").update_all_sync()', -- build step
-    config = function() require('go').setup() end },
+  -- { 'ray-x/go.nvim', dependencies = { 'ray-x/guihua.lua', 'neovim/nvim-lspconfig', 'nvim-treesitter/nvim-treesitter' }, ft = { 'go', 'gomod' }, build = ':lua require("go.install").update_all_sync()', -- build step
+  --   config = function() require('go').setup() end },
 
 
     -- Utilities
   { 'tpope/vim-commentary', event = 'VeryLazy' }, -- Basic commenting, load late
   { 'mbbill/undotree', cmd = 'UndotreeToggle' }, -- Load on command
   { 'sbdchd/neoformat', cmd = 'Neoformat', event = 'BufWritePre' }, -- Load on command or before writing
-  { 'github/copilot.vim', cmd = 'Copilot' }, -- Load on command
+  -- { 'github/copilot.vim', cmd = 'Copilot' }, -- Load on command
   { 'ptzz/lf.vim', cmd = 'Lf', dependencies = { 'voldikss/vim-floaterm' } }, -- Load on command
   { 'maralla/completor.vim', lazy = true }, -- Load when needed by completion? (May conflict with nvim-cmp)
 
