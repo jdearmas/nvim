@@ -1290,7 +1290,7 @@ map('n', '<leader>cp', ':lua copy_full_path_to_clipboard()<CR>', opts) -- Copy f
 -- File Navigation / Fuzzy Finding (Telescope)
 map('n', '<leader>ff', ':Telescope find_files<CR>', opts) -- Find files
 map('n', '<leader>fg', ':Telescope live_grep<CR>', opts) -- Live grep
--- map('n', '<leader>fb', ':Telescope buffers<CR>', opts) -- Find buffers
+map('n', '<leader>fb', ':Telescope buffers<CR>', opts) -- Find buffers
 map('n', "<leader>b",  ':Telescope buffers<CR>', { noremap = true, silent = true })
 map('n', '<leader>fh', ':Telescope help_tags<CR>', opts) -- Find help tags (Added)
 map('n', '<leader>fo', ':Telescope oldfiles<CR>', opts) -- Find oldfiles
