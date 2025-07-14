@@ -491,6 +491,7 @@ require('lazy').setup({
       vim.g.bookmark_highlight_lines = 1
     end,
 	},
+  {"tom-anders/telescope-vim-bookmarks.nvim"},
   {
     'nvim-telescope/telescope.nvim',
     cmd = 'Telescope', -- Load when :Telescope is called
@@ -568,6 +569,7 @@ require('lazy').setup({
       -- Load extensions
       pcall(telescope.load_extension, 'fzf')
       pcall(telescope.load_extension, 'media_files')
+      pcall(telescope.load_extension, 'vim_bookmarks')
     end,
   },
   { 'junegunn/fzf', build = './install --bin', lazy = true }, -- Dependency for fzf.vim and telescope-fzf-native
