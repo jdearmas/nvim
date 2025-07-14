@@ -501,6 +501,20 @@ require('lazy').setup({
       'nvim-telescope/telescope-media-files.nvim',
       'MattesGroeger/vim-bookmarks', -- Integrated bookmark support
     },
+    keys = {
+      {
+        "<leader>ft",
+        function()
+          require("telescope.builtin").current_buffer_fuzzy_find({
+            prompt_title  = "🔍 Buffer Search",
+            initial_mode  = "insert",
+            -- this is your hardcoded prefix:
+            default_text  = "* ",
+          })
+        end,
+        desc = "Fuzzy search in current buffer with hardcoded PREFIX",
+      },
+    },
     config = function()
       local telescope = require 'telescope'
       telescope.setup {
