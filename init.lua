@@ -1472,6 +1472,8 @@ vim.keymap.set(
   { desc = "Find headlines in current file"}
 )
 
+vim.keymap.set("n","F",":f ")
+
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
 
