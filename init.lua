@@ -658,6 +658,7 @@ require('lazy').setup({
       }
     end
   },
+  {"rcarriga/nvim-notify"},
   { 'tpope/vim-dispatch' }, -- Load on command
   {'kevinhwang91/nvim-bqf'},
   { 'jdearmas/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' } }, -- Load when dispatch is loaded
@@ -1489,6 +1490,160 @@ vim.keymap.set(
 )
 
 vim.keymap.set("n","F",":f ")
+
+-- Fold everything except the current visual selection
+local function fold_except_selection()
+  local api = vim.api
+
+  -- Get buffer and window
+  local bufnr = api.nvim_get_current_buf()
+  local winnr = api.nvim_get_current_win()
+
+  -- Get visual marks '< and '>
+  local start_pos = api.nvim_buf_get_mark(bufnr, "<")
+  local end_pos   = api.nvim_buf_get_mark(bufnr, ">")
+
+  -- Derive start/end lines
+  local start_line = math.min(start_pos[1], end_pos[1])
+  local end_line   = math.max(start_pos[1], end_pos[1])
+
+  -- Total lines in buffer
+  local total = api.nvim_buf_line_count(bufnr)
+
+  -- Nothing to do?
+  if start_line > total or end_line < 1 then
+    return
+  end
+
+  -- Switch to manual folding
+  api.nvim_win_set_option(winnr, "foldmethod", "manual")
+  api.nvim_win_set_option(winnr, "foldenable", true)
+  api.nvim_win_set_option(winnr, "foldminlines", 1)
+
+  -- Clear existing folds
+  vim.cmd("silent! normal! zE")
+
+  -- Fold above selection
+  if start_line > 1 then
+    vim.cmd(("%d,%dfold"):format(1, start_line - 1))
+  end
+
+  -- Fold below selection
+  if end_line < total then
+    vim.cmd(("%d,%dfold"):format(end_line + 1, total))
+  end
+
+  -- Center view on selection start
+  api.nvim_win_set_cursor(winnr, { start_line, 0 })
+  vim.cmd("normal! zz")
+end
+
+-- Map in visual mode
+vim.keymap.set("v", "<leader>f", fold_except_selection, {
+  desc = "Fold everything except visual selection",
+  silent = true,
+})
+
+
+-- stopwatch.lua
+
+local uv  = vim.loop
+local api = vim.api
+
+-- state
+local state = {
+  timer     = nil,
+  start_hr  = nil,
+  buf       = nil,
+  win       = nil,
+  goal      = nil,
+  pos       = "top",  -- "top" or "down"
+}
+
+-- create floating window at top- or bottom-center
+local function create_win()
+  state.buf = api.nvim_create_buf(false, true)
+  local width, height = 40, 1
+  local ui = api.nvim_list_uis()[1]
+
+  local row
+  if state.pos == "down" then
+    row = ui.height - height - 1
+  else
+    row = 1
+  end
+
+  local col = math.floor((ui.width - width) / 2)
+  state.win = api.nvim_open_win(state.buf, false, {
+    relative = 'editor',
+    width    = width,
+    height   = height,
+    row      = row,
+    col      = col,
+    style    = 'minimal',
+    border   = 'rounded',
+  })
+end
+
+local function close_win()
+  if state.win and api.nvim_win_is_valid(state.win) then
+    api.nvim_win_close(state.win, true)
+  end
+  state.win = nil
+  state.buf = nil
+end
+
+local function format_time(elapsed_s)
+  local m = math.floor(elapsed_s / 60)
+  local s = elapsed_s - m * 60
+  return string.format("%02d:%06.3f", m, s)
+end
+
+local function toggle()
+  if not state.timer then
+    -- start
+    state.goal     = vim.trim(vim.fn.input("⏱ Goal/description: "))
+    state.start_hr = uv.hrtime()
+    create_win()
+    state.timer = uv.new_timer()
+    state.timer:start(0, 100, vim.schedule_wrap(function()
+      local t = (uv.hrtime() - state.start_hr) / 1e9
+      local text = string.format("%s | %s", state.goal, format_time(t))
+      api.nvim_buf_set_lines(state.buf, 0, 1, false, { text })
+    end))
+  else
+    -- stop
+    state.timer:stop()
+    state.timer:close()
+    state.timer = nil
+
+    local t     = (uv.hrtime() - state.start_hr) / 1e9
+    local final = string.format("%s | 🛑 Stopped: %s", state.goal, format_time(t))
+    if state.buf then
+      api.nvim_buf_set_lines(state.buf, 0, 1, false, { final })
+    end
+
+    -- auto-close after 2s
+    vim.defer_fn(function()
+      close_win()
+      state.goal     = nil
+      state.start_hr = nil
+    end, 2000)
+  end
+end
+
+-- top-center: <leader>st
+vim.keymap.set("n", "<leader>st", function()
+  state.pos = "top"
+  toggle()
+end, { desc = "Toggle stopwatch at top-center" })
+
+-- bottom-center: <leader>sd
+vim.keymap.set("n", "<leader>sd", function()
+  state.pos = "down"
+  toggle()
+end, { desc = "Toggle stopwatch at bottom-center" })
+
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
