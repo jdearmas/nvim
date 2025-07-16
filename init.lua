@@ -700,6 +700,7 @@ require('lazy').setup({
         org_clock_header   = nil,
         header_line        = nil,
         win                = nil,
+        pos                = 'top',  -- 'top' or 'bottom'
       }
 
       -- ensure or create a named scratch buffer
@@ -712,13 +713,16 @@ require('lazy').setup({
         return state.buf
       end
 
-      -- create top-center floating window anchored to the editor
+      -- create floating window anchored to top or bottom center
       local function create_win()
         if state.win and api.nvim_win_is_valid(state.win) then return end
         local buf = get_buffer()
         local width, height = 60, 1
         local ui = api.nvim_list_uis()[1]
-        local row, col = 1, math.floor((ui.width - width) / 2)
+        local row = (state.pos == 'bottom')
+        and (ui.height - height - 1)
+        or 1
+        local col = math.floor((ui.width - width) / 2)
         state.win = api.nvim_open_win(buf, false, {
           relative   = 'editor',
           width      = width,
@@ -762,7 +766,17 @@ require('lazy').setup({
         end
       end
 
-      -- wrapper: clock in + start stopwatch + toggle bookmark on header
+      -- toggle position and recreate window
+      local function toggle_position()
+        state.pos = (state.pos == 'top') and 'bottom' or 'top'
+        if state.timer then
+          -- close and reopen at new position
+          close_win()
+          create_win()
+        end
+      end
+
+      -- wrapper: clock in + start stopwatch + toggle bookmark
       local function clock_in_and_start()
         require('orgmode').action('clock.org_clock_in')
         vim.schedule(function()
@@ -780,7 +794,6 @@ require('lazy').setup({
               local now_hr    = uv.hrtime()
               local elapsed_s = os.time() - ts
               state.org_clock_start_hr = now_hr - elapsed_s * 1e9
-              -- capture header above and record its line number
               for j = idx, 1, -1 do
                 local title = lines[j]:match('^%*+%s+(.*)')
                 if title then
@@ -792,13 +805,11 @@ require('lazy').setup({
               break
             end
           end
-          -- toggle bookmark on the header line
           if state.header_line then
             local win = api.nvim_get_current_win()
             api.nvim_win_set_cursor(win, { state.header_line, 0 })
             vim.cmd('BookmarkToggle')
           end
-          -- start timer
           if state.timer then
             state.timer:stop(); state.timer:close()
           end
@@ -816,10 +827,9 @@ require('lazy').setup({
         end)
       end
 
-      -- wrapper: clock out + stop stopwatch + toggle bookmark on header
+      -- wrapper: clock out + stop + toggle bookmark
       local function clock_out_and_stop()
         require('orgmode').action('clock.org_clock_out')
-        -- toggle bookmark on the header line, if known
         if state.header_line then
           vim.schedule(function()
             local win = api.nvim_get_current_win()
@@ -847,7 +857,8 @@ require('lazy').setup({
         pattern = 'org',
         callback = function()
           vim.keymap.set('n', '<Space>oxi', clock_in_and_start, { buffer = true })
-          vim.keymap.set('n', '<Space>oxo', clock_out_and_stop, { buffer = true })
+          vim.keymap.set('n', '<Space>oxo', clock_out_and_stop,  { buffer = true })
+          vim.keymap.set('n', '<Space>oxt', toggle_position,      { buffer = true, desc = 'Toggle stopwatch position' })
         end,
       })
 
@@ -857,6 +868,7 @@ require('lazy').setup({
       })
     end,
   }
+
 
 
 
