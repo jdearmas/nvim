@@ -792,7 +792,10 @@ require('lazy').setup({
                 hour  = tonumber(HH),    min   = tonumber(MM),  sec = 0,
               }
               local now_hr    = uv.hrtime()
-              local elapsed_s = os.time() - ts
+              -- local elapsed_s = os.time() - ts
+              local now = os.date("*t")
+              now.sec = 0
+              local elapsed_s = os.time(now) - ts
               state.org_clock_start_hr = now_hr - elapsed_s * 1e9
               for j = idx, 1, -1 do
                 local title = lines[j]:match('^%*+%s+(.*)')
@@ -1069,6 +1072,39 @@ function _G.SetMakePrgFromVisualSelection()
   local escaped_text = selected_text --vim.fn.shellescape(selected_text) -- shellescape might be too much here
   vim.opt_local.makeprg = escaped_text -- Use setlocal for buffer-specific makeprg
   vim.notify('Set local makeprg to: ' .. escaped_text, vim.log.levels.INFO)
+end
+
+
+function _G.surround_visual_with_example_org_block()
+  local start_pos = vim.fn.getpos("'<")
+  local end_pos = vim.fn.getpos("'>")
+  local start_line_num = start_pos[2]
+  local end_line_num = end_pos[2]
+
+  local block_type = "example"
+
+  -- Extract indentation from first line
+  local line = vim.api.nvim_buf_get_lines(0, start_line_num - 1, start_line_num, false)[1]
+  local indent_str = line:match("^%s*") or ""
+
+  -- Construct start and end block lines with indentation
+  local start_block_lines = {
+    indent_str .. "#+RESULTS:",
+    indent_str .. "#+begin_" .. block_type
+  }
+
+  local block_type_token = block_type:match("%S+")
+  local end_block_line = indent_str .. "#+end_" .. block_type_token
+
+  -- Insert end block *after* selection
+  vim.api.nvim_buf_set_lines(0, end_line_num, end_line_num, false, { end_block_line })
+
+  -- Insert start block lines *before* selection
+  vim.api.nvim_buf_set_lines(0, start_line_num - 1, start_line_num - 1, false, start_block_lines)
+
+  -- Adjust selection markers to include the new block
+  vim.fn.setpos("'<", { 0, start_line_num + 2, 1, 0 })
+  vim.fn.setpos("'>", { 0, end_line_num + 2, 1, 0 })
 end
 
 -- Function to surround visual selection with org block
@@ -1417,6 +1453,7 @@ map('n', '<leader>G', '', { noremap = true, silent = true, callback = function()
   end
 end, desc = 'Org Insert TODO Heading' })
 map('v', '<leader>o', [[:<C-u>lua surround_visual_with_org_block()<CR>]], opts) -- Surround with org block
+map('v', '<leader>O', [[:<C-u>lua surround_visual_with_example_org_block()<CR>]], opts) -- Surround with org block
 
 -- Misc / Utility
 map('n', '<leader>S', '<cmd>lua save_quickfix_to_file()<CR>', opts) -- Save quickfix list
@@ -1580,6 +1617,8 @@ vim.keymap.set("v", "<leader>f", fold_except_selection, {
   silent = true,
 })
 
+
+vim.opt.autochdir = true -- Automatically change directory to the file's directory (Consider potential side effects)
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
 
