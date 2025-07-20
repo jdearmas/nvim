@@ -1619,6 +1619,174 @@ vim.keymap.set("v", "<leader>f", fold_except_selection, {
 
 
 vim.opt.autochdir = true -- Automatically change directory to the file's directory (Consider potential side effects)
+
+--[[
+================================================================================
+  ANCHORED WINDOW LAYOUT (v3)
+  - This version re-opens anchored buffers if their window is closed.
+  - Adds a keymap to toggle the anchored window between the top and bottom.
+  - Drop this entire code block into your init.lua
+================================================================================
+--]]
+
+-- Configuration section
+local anchored_height = 5 -- The fixed height for your anchored window
+local anchored_position = 'bottom' -- Default position: 'top' or 'bottom'
+local anchor_keymap = "<leader>a" -- Keymap to anchor the current buffer
+local unanchor_keymap = "<leader>ua" -- Keymap to un-anchor the current buffer
+local anchor_toggle_pos_keymap = "<leader>ap" -- Keymap to toggle position (Top/Bottom)
+
+-- We use a table as a set to keep track of which buffers are anchored.
+-- This allows us to restore them if their window is closed.
+local anchored_buffers = {}
+
+-- Forward declare the main function so the toggle function can call it.
+local apply_anchor_rules
+
+-- Toggles the desired position of the anchored window and reapplies the layout.
+local function toggle_anchor_position()
+  if anchored_position == 'bottom' then
+    anchored_position = 'top'
+    print("Anchored position set to: top")
+  else
+    anchored_position = 'bottom'
+    print("Anchored position set to: bottom")
+  end
+  apply_anchor_rules() -- Re-apply rules to move the window immediately
+end
+
+-- This function contains the core logic to enforce the window layout.
+apply_anchor_rules = function()
+  -- Defer execution to prevent race conditions during complex layout changes.
+  vim.schedule(function()
+    -- First, get a snapshot of all windows and their buffers in the current tab.
+    local wins_by_buf = {}
+    for _, win_id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      local buf_id = vim.api.nvim_win_get_buf(win_id)
+      if not wins_by_buf[buf_id] then
+        wins_by_buf[buf_id] = {}
+      end
+      table.insert(wins_by_buf[buf_id], win_id)
+    end
+
+    -- Now, iterate through the buffers that are supposed to be anchored.
+    for buf_id, _ in pairs(anchored_buffers) do
+      -- Clean up any buffers that are no longer valid or loaded.
+      if not vim.api.nvim_buf_is_valid(buf_id) or not vim.api.nvim_buf_is_loaded(buf_id) then
+        anchored_buffers[buf_id] = nil
+        goto continue
+      end
+
+      local wins = wins_by_buf[buf_id] or {}
+
+      if #wins == 0 then
+        -- ANCHOR RESTORATION: The buffer has no window, so it was closed. Re-open it.
+        -- Safeguard: Don't try to split if the only remaining window is too small.
+        if #vim.api.nvim_tabpage_list_wins(0) == 1 and vim.api.nvim_win_get_height(0) < (anchored_height + 5) then
+          goto continue
+        end
+
+        local current_win = vim.api.nvim_get_current_win()
+        -- Create a new split at the top or bottom with the correct height.
+        local split_cmd = (anchored_position == 'top') and 'topleft ' or 'botright '
+        vim.cmd(split_cmd .. anchored_height .. 'sp')
+        -- Set the buffer in the new window.
+        vim.api.nvim_win_set_buf(0, buf_id)
+        vim.wo.winfixheight = true
+        -- Return focus to the window the user was in.
+        vim.api.nvim_set_current_win(current_win)
+
+      else
+        -- LAYOUT MAINTENANCE: The buffer is visible. Apply original logic.
+        -- 1. Enforce "NO SPLITS": If there are multiple windows, close the extras.
+        if #wins > 1 then
+          for i = 2, #wins do
+            if vim.api.nvim_win_is_valid(wins[i]) then
+              vim.api.nvim_win_close(wins[i], false)
+            end
+          end
+        end
+
+        -- 2. Enforce "FIXED HEIGHT & POSITION":
+        local win_to_format = wins[1]
+        if vim.api.nvim_win_is_valid(win_to_format) and #vim.api.nvim_tabpage_list_wins(0) > 1 then
+          -- Set fixed height
+          vim.api.nvim_set_option_value('winfixheight', true, { win = win_to_format })
+          pcall(vim.api.nvim_win_set_height, win_to_format, anchored_height)
+
+          -- Move the window to the correct position
+          local current_win_before_move = vim.api.nvim_get_current_win()
+          vim.api.nvim_set_current_win(win_to_format)
+          if anchored_position == 'top' then
+            vim.cmd('wincmd K') -- Move to full-width top
+          else -- 'bottom'
+            vim.cmd('wincmd J') -- Move to full-width bottom
+          end
+          -- Restore focus to the original window if it's still valid
+          if vim.api.nvim_win_is_valid(current_win_before_move) then
+            vim.api.nvim_set_current_win(current_win_before_move)
+          end
+        end
+      end
+      ::continue::
+    end
+  end)
+end
+
+-- Create a user command to "mark" the current buffer as anchored.
+vim.api.nvim_create_user_command('AnchorBuffer', function()
+  local buf_id = vim.api.nvim_get_current_buf()
+  anchored_buffers[buf_id] = true
+  print("Buffer " .. buf_id .. " is now anchored.")
+  apply_anchor_rules() -- Apply rules immediately.
+end, {
+  desc = "Anchor the current buffer to a fixed-size window.",
+})
+
+-- Create a command to un-anchor a buffer.
+vim.api.nvim_create_user_command('UnanchorBuffer', function()
+  local buf_id = vim.api.nvim_get_current_buf()
+  anchored_buffers[buf_id] = nil
+  vim.wo.winfixheight = false -- Reset the window option.
+  print("Buffer " .. buf_id .. " is no longer anchored.")
+end, {
+  desc = "Remove the anchor from the current buffer.",
+})
+
+-- Create an autocommand group to ensure our commands don't get duplicated on reload.
+local anchor_group = vim.api.nvim_create_augroup('AnchorWindowLayout', { clear = true })
+
+-- These autocommands trigger the check on various layout and window changes.
+vim.api.nvim_create_autocmd({ 'WinEnter', 'TabEnter', 'VimResized', 'WinClosed' }, {
+  group = anchor_group,
+  pattern = '*',
+  desc = "Apply anchored window rules on layout changes.",
+  callback = apply_anchor_rules,
+})
+
+-- Setup the keymaps
+vim.keymap.set('n', anchor_keymap, '<Cmd>AnchorBuffer<CR>', {
+  noremap = true,
+  silent = true,
+  desc = "Anchor the current buffer's window"
+})
+vim.keymap.set('n', unanchor_keymap, '<Cmd>UnanchorBuffer<CR>', {
+  noremap = true,
+  silent = true,
+  desc = "Un-anchor the current buffer's window"
+})
+vim.keymap.set('n', anchor_toggle_pos_keymap, toggle_anchor_position, {
+  noremap = true,
+  silent = false, -- Show the print message
+  desc = "Toggle anchored window position (top/bottom)"
+})
+
+--[[
+================================================================================
+  END OF ANCHORED WINDOW LAYOUT
+================================================================================
+--]]
+
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
 
