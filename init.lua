@@ -1622,170 +1622,102 @@ vim.opt.autochdir = true -- Automatically change directory to the file's directo
 
 --[[
 ================================================================================
-  ANCHORED WINDOW LAYOUT (v3)
-  - This version re-opens anchored buffers if their window is closed.
-  - Adds a keymap to toggle the anchored window between the top and bottom.
-  - Drop this entire code block into your init.lua
+  ON-DEMAND POPOUT WINDOW (Single File Version)
+  - Added logic to jump back to the previous window.
 ================================================================================
 --]]
 
--- Configuration section
-local anchored_height = 5 -- The fixed height for your anchored window
-local anchored_position = 'bottom' -- Default position: 'top' or 'bottom'
-local anchor_keymap = "<leader>a" -- Keymap to anchor the current buffer
-local unanchor_keymap = "<leader>ua" -- Keymap to un-anchor the current buffer
-local anchor_toggle_pos_keymap = "<leader>ap" -- Keymap to toggle position (Top/Bottom)
+-- Create a table to act as a namespace for our functions and variables.
+local popout = {}
 
--- We use a table as a set to keep track of which buffers are anchored.
--- This allows us to restore them if their window is closed.
-local anchored_buffers = {}
+--- CONFIGURATION ---
+popout.default_height = 5
+popout.position = 'bottom'
+---------------------
 
--- Forward declare the main function so the toggle function can call it.
-local apply_anchor_rules
+-- This variable will hold the buffer number you want to open.
+popout.target_bufnr = nil
+-- This will hold the window ID to jump back to.
+popout.previous_win_id = nil
 
--- Toggles the desired position of the anchored window and reapplies the layout.
-local function toggle_anchor_position()
-  if anchored_position == 'bottom' then
-    anchored_position = 'top'
-    print("Anchored position set to: top")
+---Sets the current buffer as the target for the popout window.
+function popout.set_target_buffer()
+  popout.target_bufnr = vim.api.nvim_get_current_buf()
+  local fname = vim.api.nvim_buf_get_name(popout.target_bufnr)
+  print(string.format("Popout target set to buffer %d: %s", popout.target_bufnr, vim.fn.fnamemodify(fname, ":t")))
+end
+
+---Toggles the popout window position between top and bottom.
+function popout.toggle_position()
+  if popout.position == 'bottom' then
+    popout.position = 'top'
   else
-    anchored_position = 'bottom'
-    print("Anchored position set to: bottom")
+    popout.position = 'bottom'
   end
-  apply_anchor_rules() -- Re-apply rules to move the window immediately
+  print("Popout position set to: " .. popout.position)
 end
 
--- This function contains the core logic to enforce the window layout.
-apply_anchor_rules = function()
-  -- Defer execution to prevent race conditions during complex layout changes.
-  vim.schedule(function()
-    -- First, get a snapshot of all windows and their buffers in the current tab.
-    local wins_by_buf = {}
-    for _, win_id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-      local buf_id = vim.api.nvim_win_get_buf(win_id)
-      if not wins_by_buf[buf_id] then
-        wins_by_buf[buf_id] = {}
-      end
-      table.insert(wins_by_buf[buf_id], win_id)
+---Opens, jumps to, or jumps back from the popout window.
+function popout.open_in_split()
+  -- 1. Validate that a target buffer has been set.
+  if not popout.target_bufnr or not vim.api.nvim_buf_is_valid(popout.target_bufnr) then
+    vim.notify("No valid target buffer set. Use 'set target' keymap first.", vim.log.levels.WARN, { title = "Popout" })
+    return
+  end
+
+  local current_win_id = vim.api.nvim_get_current_win()
+  local current_buf_id = vim.api.nvim_win_get_buf(current_win_id)
+
+  -- 2. JUMP-BACK LOGIC: If we're already in the popout, jump back.
+  if current_buf_id == popout.target_bufnr then
+    if popout.previous_win_id and vim.api.nvim_win_is_valid(popout.previous_win_id) then
+      local jump_back_target = popout.previous_win_id
+      popout.previous_win_id = nil -- Clear the state after use
+      vim.api.nvim_set_current_win(jump_back_target)
+    else
+      vim.notify("No previous window to jump back to.", vim.log.levels.WARN, { title = "Popout" })
     end
+    return
+  end
 
-    -- Now, iterate through the buffers that are supposed to be anchored.
-    for buf_id, _ in pairs(anchored_buffers) do
-      -- Clean up any buffers that are no longer valid or loaded.
-      if not vim.api.nvim_buf_is_valid(buf_id) or not vim.api.nvim_buf_is_loaded(buf_id) then
-        anchored_buffers[buf_id] = nil
-        goto continue
-      end
+  -- If not jumping back, we're jumping *to* the popout.
+  -- Store the current window so we can jump back to it later.
+  popout.previous_win_id = current_win_id
 
-      local wins = wins_by_buf[buf_id] or {}
-
-      if #wins == 0 then
-        -- ANCHOR RESTORATION: The buffer has no window, so it was closed. Re-open it.
-        -- Safeguard: Don't try to split if the only remaining window is too small.
-        if #vim.api.nvim_tabpage_list_wins(0) == 1 and vim.api.nvim_win_get_height(0) < (anchored_height + 5) then
-          goto continue
-        end
-
-        local current_win = vim.api.nvim_get_current_win()
-        -- Create a new split at the top or bottom with the correct height.
-        local split_cmd = (anchored_position == 'top') and 'topleft ' or 'botright '
-        vim.cmd(split_cmd .. anchored_height .. 'sp')
-        -- Set the buffer in the new window.
-        vim.api.nvim_win_set_buf(0, buf_id)
-        vim.wo.winfixheight = true
-        -- Return focus to the window the user was in.
-        vim.api.nvim_set_current_win(current_win)
-
-      else
-        -- LAYOUT MAINTENANCE: The buffer is visible. Apply original logic.
-        -- 1. Enforce "NO SPLITS": If there are multiple windows, close the extras.
-        if #wins > 1 then
-          for i = 2, #wins do
-            if vim.api.nvim_win_is_valid(wins[i]) then
-              vim.api.nvim_win_close(wins[i], false)
-            end
-          end
-        end
-
-        -- 2. Enforce "FIXED HEIGHT & POSITION":
-        local win_to_format = wins[1]
-        if vim.api.nvim_win_is_valid(win_to_format) and #vim.api.nvim_tabpage_list_wins(0) > 1 then
-          -- Set fixed height
-          vim.api.nvim_set_option_value('winfixheight', true, { win = win_to_format })
-          pcall(vim.api.nvim_win_set_height, win_to_format, anchored_height)
-
-          -- Move the window to the correct position
-          local current_win_before_move = vim.api.nvim_get_current_win()
-          vim.api.nvim_set_current_win(win_to_format)
-          if anchored_position == 'top' then
-            vim.cmd('wincmd K') -- Move to full-width top
-          else -- 'bottom'
-            vim.cmd('wincmd J') -- Move to full-width bottom
-          end
-          -- Restore focus to the original window if it's still valid
-          if vim.api.nvim_win_is_valid(current_win_before_move) then
-            vim.api.nvim_set_current_win(current_win_before_move)
-          end
-        end
-      end
-      ::continue::
+  -- 3. JUMP-TO LOGIC: Find an existing window with the target buffer.
+  local target_win_id = nil
+  for _, win_id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.api.nvim_win_get_buf(win_id) == popout.target_bufnr then
+      target_win_id = win_id
+      break
     end
-  end)
+  end
+
+  if target_win_id then
+    -- If the window exists, just jump focus to it.
+    vim.api.nvim_set_current_win(target_win_id)
+    return
+  end
+
+  -- 4. CREATE LOGIC: If the window doesn't exist, create it.
+  local height = vim.v.count > 0 and vim.v.count or popout.default_height
+  local split_cmd = (popout.position == 'top') and 'topleft' or 'botright'
+  vim.cmd(string.format("%s %d split", split_cmd, height))
+  vim.api.nvim_win_set_buf(0, popout.target_bufnr)
 end
 
--- Create a user command to "mark" the current buffer as anchored.
-vim.api.nvim_create_user_command('AnchorBuffer', function()
-  local buf_id = vim.api.nvim_get_current_buf()
-  anchored_buffers[buf_id] = true
-  print("Buffer " .. buf_id .. " is now anchored.")
-  apply_anchor_rules() -- Apply rules immediately.
-end, {
-  desc = "Anchor the current buffer to a fixed-size window.",
+--- KEYMAPS ---
+vim.keymap.set({'n', 't'}, '<leader>ps', popout.set_target_buffer, {
+  desc = "[P]opout [S]et Target Buffer"
 })
 
--- Create a command to un-anchor a buffer.
-vim.api.nvim_create_user_command('UnanchorBuffer', function()
-  local buf_id = vim.api.nvim_get_current_buf()
-  anchored_buffers[buf_id] = nil
-  vim.wo.winfixheight = false -- Reset the window option.
-  print("Buffer " .. buf_id .. " is no longer anchored.")
-end, {
-  desc = "Remove the anchor from the current buffer.",
+vim.keymap.set({'n', 't'}, '<leader>pt', popout.toggle_position, {
+  desc = "[P]opout [T]oggle Position (Top/Bottom)"
 })
 
--- Create an autocommand group to ensure our commands don't get duplicated on reload.
-local anchor_group = vim.api.nvim_create_augroup('AnchorWindowLayout', { clear = true })
-
--- These autocommands trigger the check on various layout and window changes.
-vim.api.nvim_create_autocmd({ 'WinEnter', 'TabEnter', 'VimResized', 'WinClosed' }, {
-  group = anchor_group,
-  pattern = '*',
-  desc = "Apply anchored window rules on layout changes.",
-  callback = apply_anchor_rules,
+vim.keymap.set('n', '<C-h>', popout.open_in_split, {
+  desc = "[P]opout [O]pen, Jump To, or Jump Back"
 })
-
--- Setup the keymaps
-vim.keymap.set('n', anchor_keymap, '<Cmd>AnchorBuffer<CR>', {
-  noremap = true,
-  silent = true,
-  desc = "Anchor the current buffer's window"
-})
-vim.keymap.set('n', unanchor_keymap, '<Cmd>UnanchorBuffer<CR>', {
-  noremap = true,
-  silent = true,
-  desc = "Un-anchor the current buffer's window"
-})
-vim.keymap.set('n', anchor_toggle_pos_keymap, toggle_anchor_position, {
-  noremap = true,
-  silent = false, -- Show the print message
-  desc = "Toggle anchored window position (top/bottom)"
-})
-
---[[
-================================================================================
-  END OF ANCHORED WINDOW LAYOUT
-================================================================================
---]]
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
