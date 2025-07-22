@@ -777,6 +777,10 @@ require('lazy').setup({
       end
 
       -- wrapper: clock in + start stopwatch + toggle bookmark
+      --
+      local function removeTODO(s)
+        return s:gsub("^%s*TODO%s*", "")
+      end
       local function clock_in_and_start()
         require('orgmode').action('clock.org_clock_in')
         vim.schedule(function()
@@ -800,7 +804,7 @@ require('lazy').setup({
               for j = idx, 1, -1 do
                 local title = lines[j]:match('^%*+%s+(.*)')
                 if title then
-                  state.org_clock_header = title
+                  state.org_clock_header = removeTODO(title)
                   state.header_line = j
                   break
                 end
@@ -821,7 +825,7 @@ require('lazy').setup({
           state.timer:start(0, 100, vim.schedule_wrap(function()
             if not state.org_clock_start_hr then return end
             local elapsed_ns = uv.hrtime() - state.org_clock_start_hr
-            local txt = string.format('%s | %s', state.org_clock_header or '', format_elapsed_ns(elapsed_ns))
+            local txt = string.format('%s | %s',  format_elapsed_ns(elapsed_ns), state.org_clock_header or '')
             local buf = get_buffer()
             if api.nvim_buf_is_valid(buf) then
               api.nvim_buf_set_lines(buf, 0, -1, false, { txt })
