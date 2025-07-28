@@ -510,7 +510,7 @@ require('lazy').setup({
             prompt_title  = "🔍 Buffer Search",
             initial_mode  = "insert",
             -- this is your hardcoded prefix:
-            default_text  = "* ",
+            default_text  = "^* ",
           })
         end,
         desc = "Fuzzy search in current buffer with hardcoded PREFIX",
@@ -1616,7 +1616,7 @@ local function fold_except_selection()
 end
 
 -- Map in visual mode
-vim.keymap.set("v", "<leader>f", fold_except_selection, {
+vim.keymap.set("v", "a", fold_except_selection, {
   desc = "Fold everything except visual selection",
   silent = true,
 })
