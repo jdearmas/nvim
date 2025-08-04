@@ -580,7 +580,7 @@ require('lazy').setup({
   { 'folke/twilight.nvim', cmd = 'Twilight', config = true }, -- Load on command
   { 'pocco81/true-zen.nvim', cmd = { 'TZFocus', 'TZMinimalist', 'TZAtaraxis', 'TZNarrow' }, config = true }, -- Load on command
   { 'jdearmas/taboo', event = 'BufWinEnter', config = true }, -- Load when entering a window
-  { 'yorickpeterse/nvim-window', keys = { { 'n', '<leader>a' } }, config = true }, -- Load on keypress
+  { 'yorickpeterse/nvim-window', keys = { { 'n', '<leader>w' } }, config = true }, -- Load on keypress
   -- { 'chrisbra/Colorizer', event = 'BufReadPost', config = true }, -- Load after buffer read
 
   -- Command Line / Terminal
@@ -1297,7 +1297,7 @@ map('n', 'k', 'gk', { noremap = true, silent = true, desc = 'Move up visual line
 map('n', 'J', '<PageDown>', { desc = 'Page Down' }) -- Remap J/K for PgUp/PgDn if desired
 map('n', 'K', '<PageUp>', { desc = 'Page Up' }) -- Conflicts with default K (hover) if LSP not mapped differently
 map('n', '<BS>', ':bp<CR>', opts) -- Go to previous buffer
-map('n', '<leader>w', ':set wrap!<CR>', opts) -- Toggle wrap
+-- map('n', '<leader>w', ':set wrap!<CR>', opts) -- Toggle wrap
 map('n', '<leader>m', ':NoNeckPain<CR>', opts) -- Toggle NoNeckPain
 map('n', '<leader>r', ':only<CR>', opts) -- Close all other windows
 map('n', '<leader><leader>', ':w!<CR>', opts) -- Quick save
