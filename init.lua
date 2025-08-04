@@ -1312,7 +1312,7 @@ map('n', '[t', ':tabprevious<CR>', { noremap = true, silent = true, desc = 'Prev
 
 -- Terminal
 map('n', '<leader>i', ':new | terminal<CR>', opts) -- Open terminal in new horizontal split
-map('n', 'ss',        '<Plug>SendLine')
+map('n', 's',        '<Plug>SendLine')
 
 -- Clipboard / Yanking
 map({ 'n', 'v' }, '<leader>y', '"+y', { desc = 'Yank to system clipboard' })
@@ -1400,15 +1400,13 @@ map('n', '<leader>ot', ':lua create_c_template()<CR>', opts) -- Create C templat
 map('n', '<leader>db', ':lua DeleteBuffersMatchingPattern()<CR>', opts) -- Delete buffers by pattern
 map('n', 'gf', ':lua goto_or_create()<CR>', opts) -- Go to file under cursor (create if needed)
 
--- Override ':' for fine-cmdline
-map('n', ':', '<cmd>FineCmdline<CR>', { noremap = true })
+-- Override '<Enter>' for fine-cmdline
+map('n', '<CR>', '<cmd>FineCmdline<CR>', { noremap = true })
 
 -- Fix potential conflicts/typos
 map('i', 'hs', '<esc>', opts) -- Escape from insert mode
 map('i', 'hu', '<esc>', opts) -- Escape from insert mode (duplicate?)
 
-
-map('n', 'n', '<cmd>FineCmdline<CR>', { noremap = true })
 
 -- Remove or fix potentially conflicting/unused maps
 -- map('v', 'n', '<C-y,', {}) -- What was this intended for? Removing for now.
@@ -1656,6 +1654,7 @@ vim.keymap.set({'n', 't'}, '<leader>pt', popout.toggle_position, {
 vim.keymap.set('n', '<C-h>', popout.open_in_split, {
   desc = "[P]opout [O]pen, Jump To, or Jump Back"
 })
+
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
