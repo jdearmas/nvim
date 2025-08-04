@@ -105,9 +105,9 @@ local lsp_attach_callback = function(client, bufnr)
   map('n', '<leader>f', function() vim.lsp.buf.format { async = true } end, { desc = 'LSP Format Buffer' })
 
   -- Workspace management
-  map('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, { desc = 'LSP Add Workspace Folder' })
-  map('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, { desc = 'LSP Remove Workspace Folder' })
-  map('n', '<leader>wl', function() print(vim.inspect(vim.lsp.buf.list_workspace_folders())) end, { desc = 'LSP List Workspace Folders' })
+  -- map('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, { desc = 'LSP Add Workspace Folder' })
+  -- map('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, { desc = 'LSP Remove Workspace Folder' })
+  -- map('n', '<leader>wl', function() print(vim.inspect(vim.lsp.buf.list_workspace_folders())) end, { desc = 'LSP List Workspace Folders' })
 
   -- Optional: Enable completion triggered by <c-x><c-o>
   -- vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
@@ -1342,7 +1342,7 @@ map('n', '<leader>j', '<C-w>j', opts) -- Move to window below
 map('n', '<leader>k', '<C-w>k', opts) -- Move to window above
 map('n', '<leader>h', '<C-w>h', opts) -- Move to window left (Added)
 map('n', '<leader>l', '<C-w>l', opts) -- Move to window right (Added)
-map('n', '<leader>a', ':lua require("nvim-window").pick()<CR>', opts) -- Pick window visually
+map('n', '<leader>w', ':lua require("nvim-window").pick()<CR>', opts) -- Pick window visually
 
 -- Tab Management
 map('n', '<leader>tn', ':tabnew<CR>', { noremap = true, desc = 'New Tab' })
