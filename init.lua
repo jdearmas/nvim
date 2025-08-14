@@ -1061,6 +1061,38 @@ function _G.SetMakePrgFromVisualSelection()
 end
 
 
+function _G.surround_visual_with_bash_org_block()
+  local start_pos = vim.fn.getpos("'<")
+  local end_pos = vim.fn.getpos("'>")
+  local start_line_num = start_pos[2]
+  local end_line_num = end_pos[2]
+
+  local block_type = "bash"
+
+  -- Extract indentation from first line
+  local line = vim.api.nvim_buf_get_lines(0, start_line_num - 1, start_line_num, false)[1]
+  local indent_str = line:match("^%s*") or ""
+
+  -- Construct start and end block lines with indentation
+  local start_block_lines = {
+    indent_str .. "#+begin_src " .. block_type
+  }
+
+  local block_type_token = block_type:match("%S+")
+  local end_block_line = indent_str .. "#+end_" .. block_type_token
+
+  -- Insert end block *after* selection
+  vim.api.nvim_buf_set_lines(0, end_line_num, end_line_num, false, { end_block_line })
+
+  -- Insert start block lines *before* selection
+  vim.api.nvim_buf_set_lines(0, start_line_num - 1, start_line_num - 1, false, start_block_lines)
+
+  -- Adjust selection markers to include the new block
+  vim.fn.setpos("'<", { 0, start_line_num + 2, 1, 0 })
+  vim.fn.setpos("'>", { 0, end_line_num + 2, 1, 0 })
+end
+
+
 function _G.surround_visual_with_example_org_block()
   local start_pos = vim.fn.getpos("'<")
   local end_pos = vim.fn.getpos("'>")
@@ -1434,6 +1466,7 @@ map('n', '<leader>G', '', { noremap = true, silent = true, callback = function()
 end, desc = 'Org Insert TODO Heading' })
 map('v', '<leader>o', [[:<C-u>lua surround_visual_with_org_block()<CR>]], opts) -- Surround with org block
 map('v', '<leader>O', [[:<C-u>lua surround_visual_with_example_org_block()<CR>]], opts) -- Surround with org block
+map('v', '<leader>B', [[:<C-u>lua surround_visual_with_bash_org_block()<CR>]], opts) -- Surround with org block
 
 -- Misc / Utility
 map('n', '<leader>S', '<cmd>lua save_quickfix_to_file()<CR>', opts) -- Save quickfix list
