@@ -669,6 +669,7 @@ require('lazy').setup({
     opts = {
       org_agenda_files       = { '~/org/*', '~/orgs/**/*' },
       org_default_notes_file = '~/org/todo.org',
+      org_todo_keywords = {'TODO', '|', 'DONE', 'FAILED'}
     },
     config = function(_, opts)
       local api = vim.api
