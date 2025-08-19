@@ -138,6 +138,7 @@ require('lazy').setup({
   opts = {
     -- add any opts here
     -- for example
+    mode = "legacy",
     provider = "claude",
     providers = {
       claude = {
@@ -1079,8 +1080,8 @@ function _G.surround_visual_with_bash_org_block()
     indent_str .. "#+begin_src " .. block_type
   }
 
-  local block_type_token = block_type:match("%S+")
-  local end_block_line = indent_str .. "#+end_" .. block_type_token
+  -- local block_type_token = block_type:match("%S+")
+  local end_block_line = indent_str .. "#+end_src"
 
   -- Insert end block *after* selection
   vim.api.nvim_buf_set_lines(0, end_line_num, end_line_num, false, { end_block_line })
