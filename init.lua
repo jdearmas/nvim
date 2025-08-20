@@ -451,13 +451,12 @@ require('lazy').setup({
   {"tom-anders/telescope-vim-bookmarks.nvim"},
   {
     'nvim-telescope/telescope.nvim',
-    cmd = 'Telescope', -- Load when :Telescope is called
+    cmd = 'Telescope',
     dependencies = {
       'nvim-lua/plenary.nvim',
-      -- Optional: FZF sorter for improved performance
       { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
       'nvim-telescope/telescope-media-files.nvim',
-      'MattesGroeger/vim-bookmarks', -- Integrated bookmark support
+      'MattesGroeger/vim-bookmarks',
     },
     keys = {
       {
@@ -466,21 +465,30 @@ require('lazy').setup({
           require("telescope.builtin").current_buffer_fuzzy_find({
             prompt_title  = "🔍 Buffer Search",
             initial_mode  = "insert",
-            -- this is your hardcoded prefix:
             default_text  = "* ",
           })
         end,
         desc = "Fuzzy search in current buffer with hardcoded PREFIX",
       },
+      {
+        "<leader>fb",
+        function()
+          require("telescope.builtin").buffers({
+            sort_lastused = true,
+            ignore_current_buffer = true,
+            show_all_buffers = true,
+            previewer = true,
+          })
+        end,
+        desc = "Buffers (with preview)",
+      },
     },
     config = function()
       local telescope = require 'telescope'
+      local actions = require('telescope.actions')
+      local action_layout = require('telescope.actions.layout')
+
       telescope.setup {
-        buffers = {
-          show_all_buffers = true,
-          sort_mru = true,
-          ignore_current_buffer = true,
-        },
         defaults = {
           layout_strategy = 'horizontal',
           layout_config = {
@@ -491,39 +499,48 @@ require('lazy').setup({
             vertical = { mirror = false },
             width = 0.87,
             height = 0.80,
-            preview_cutoff = 120,
+            preview_cutoff = 1, -- keep preview visible even on narrow windows
           },
           sorting_strategy = 'ascending',
           file_ignore_patterns = { 'node_modules', '.git' },
           path_display = { 'truncate' },
           mappings = {
             i = {
-              ['<C-n>'] = require('telescope.actions').move_selection_next,
-              ['<C-p>'] = require('telescope.actions').move_selection_previous,
-              ['<C-q>'] = require('telescope.actions').send_selected_to_qflist + require('telescope.actions').open_qflist,
-              ['<Down>'] = require('telescope.actions').move_selection_next,
-              ['<Up>'] = require('telescope.actions').move_selection_previous,
-              ['<esc>'] = require('telescope.actions').close,
+              ['<C-n>'] = actions.move_selection_next,
+              ['<C-p>'] = actions.move_selection_previous,
+              ['<C-q>'] = actions.send_selected_to_qflist + actions.open_qflist,
+              ['<Down>'] = actions.move_selection_next,
+              ['<Up>'] = actions.move_selection_previous,
+              ['<esc>'] = actions.close,
+              ['<M-p>'] = action_layout.toggle_preview, -- toggle preview on the fly
+            },
+            n = {
+              ['<M-p>'] = action_layout.toggle_preview,
             },
           },
         },
         pickers = {
-          -- Configure pickers
+          buffers = {
+            sort_lastused = true,
+            ignore_current_buffer = true,
+            show_all_buffers = true,
+            previewer = true, -- enable preview for buffers picker
+          },
         },
         extensions = {
           fzf = {
-            fuzzy = true, -- Enable fuzzy finding
-            override_generic_sorter = true, -- Use fzf sorter for generic pickers
-            override_file_sorter = true, -- Use fzf sorter for file pickers
-            case_mode = 'smart_case', -- "smart_case" | "ignore_case" | "respect_case"
+            fuzzy = true,
+            override_generic_sorter = true,
+            override_file_sorter = true,
+            case_mode = 'smart_case',
           },
           media_files = {
-            -- filetypes = {"png", "webp", "jpg", "jpeg"}, -- Specify filetypes for media preview
-            -- find_cmd = "rg" -- Can change the command used for finding files
+            -- filetypes = {"png", "webp", "jpg", "jpeg"},
+            -- find_cmd = "rg",
           },
         },
       }
-      -- Load extensions
+
       pcall(telescope.load_extension, 'fzf')
       pcall(telescope.load_extension, 'media_files')
       pcall(telescope.load_extension, 'vim_bookmarks')
@@ -1399,7 +1416,6 @@ map('n', '<leader>cp', ':lua copy_full_path_to_clipboard()<CR>', opts) -- Copy f
 -- File Navigation / Fuzzy Finding (Telescope)
 map('n', '<leader>ff', ':Telescope find_files<CR>', opts) -- Find files
 map('n', '<leader>fg', ':Telescope live_grep<CR>', opts) -- Live grep
-map('n', '<leader>fb', ':Telescope buffers<CR>', opts) -- Find buffers
 map('n', "<leader>b",  ':Telescope buffers<CR>', { noremap = true, silent = true })
 map('n', '<leader>fh', ':Telescope help_tags<CR>', opts) -- Find help tags (Added)
 map('n', '<leader>fo', ':Telescope oldfiles<CR>', opts) -- Find oldfiles
