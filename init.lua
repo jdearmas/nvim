@@ -1748,6 +1748,149 @@ vim.keymap.set('n', '<C-h>', popout.open_in_split, {
   desc = "[P]opout [O]pen, Jump To, or Jump Back"
 })
 
+local function org_heading_to_tmp_and_run(opts)
+  opts = opts or {}
+  local dir = opts.dir or "/tmp/org-extract"
+  local ext = opts.ext or ".org"
+  local cmd = opts.cmd or { "cat" }
+  dir = vim.fn.expand(dir)                 -- expand ~
+  dir = vim.fn.fnamemodify(dir, ":p")      -- absolute path
+
+  vim.fn.mkdir(dir, "p")
+
+  -- Save & restore unnamed register
+  local old_reg  = vim.fn.getreg('"')
+  local old_type = vim.fn.getregtype('"')
+
+  -- Yank around heading (v + org text object + y)
+  vim.api.nvim_feedkeys('v', 'n', false)
+  local ok = pcall(function()
+    require("orgmode.org.text_objects").around_heading()
+  end)
+  if not ok then
+    vim.notify("orgmode text object not available.", vim.log.levels.ERROR)
+    return
+  end
+  vim.cmd('normal! y')
+
+  local content = vim.fn.getreg('"') or ""
+  vim.fn.setreg('"', old_reg, old_type)
+  if content == "" then
+    vim.notify("Nothing yanked.", vim.log.levels.WARN)
+    return
+  end
+
+  -- Open split with preview content (UNFOLDED & editable)
+  vim.cmd("belowright new")
+  local win = vim.api.nvim_get_current_win()
+  local buf = vim.api.nvim_get_current_buf()
+
+  vim.bo[buf].buftype   = "nofile"  -- scratch buffer
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].swapfile  = false
+  vim.bo[buf].filetype  = "org"
+  vim.bo[buf].modifiable = true
+
+  -- Window-local fold options (⚠️ use vim.wo / win-scoped API)
+  -- Works on all recent Neovim: prefer vim.wo[win], fallback to nvim_set_option_value if you like.
+  vim.wo[win].foldenable = false
+  vim.wo[win].foldmethod = "manual"
+  vim.wo[win].foldlevel  = 999
+
+  -- Load content
+  local lines = vim.split(content, "\n", true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.cmd("normal! gg")
+  pcall(vim.cmd, "normal! zR")  -- just in case any folds remain
+
+  -- Helpers
+  local function make_path()
+    -- local fname = string.format("org_%s_%d%s", os.date("%Y%m%d_%H%M%S"), vim.fn.rand(), ext)
+    local fname = string.format(vim.fn.rand(), ext)
+    return dir .. "/" .. fname
+  end
+
+  local function confirm_and_run()
+    local path = make_path()
+    local curr = vim.api.nvim_buf_get_lines(buf, 0, -1, true)
+    vim.fn.writefile(curr, path)
+
+    -- expand ~ and relative paths in cmd list
+    local args = {}
+    for _, a in ipairs(cmd) do
+      table.insert(args, vim.fn.expand(a))
+    end
+    table.insert(args, path) -- add the temp file path at the end
+
+    vim.fn.jobstart(args, {
+      stdout_buffered = true,
+      stderr_buffered = true,
+      on_stdout = function(_, data)
+        if data and #data > 0 then
+          vim.notify(table.concat(data, "\n"), vim.log.levels.INFO, { title = "Command output" })
+        end
+      end,
+      on_stderr = function(_, data)
+        if data and table.concat(data, "") ~= "" then
+          vim.notify(table.concat(data, "\n"), vim.log.levels.ERROR, { title = "Command error" })
+        end
+      end,
+    })
+
+    -- Turn preview into a real file buffer (so you can keep editing/saving)
+    if vim.api.nvim_buf_is_valid(buf) then
+      vim.api.nvim_buf_set_name(buf, path)
+      vim.bo[buf].buftype = ""
+      vim.bo[buf].swapfile = true
+      vim.api.nvim_buf_set_option(buf, "modified", false)
+    end
+
+    vim.notify(("Wrote %s and ran: %s"):format(path, table.concat(args, " ")), vim.log.levels.INFO, { title = "Org extract" })
+  end
+
+  local function cancel()
+    if vim.api.nvim_buf_is_valid(buf) then
+      pcall(vim.api.nvim_buf_delete, buf, { force = true })
+    end
+    vim.notify("Aborted", vim.log.levels.WARN, { title = "Org extract" })
+  end
+
+  -- Show Yes/No ONLY after you leave the preview buffer
+  local aug = vim.api.nvim_create_augroup("OrgExtractPreviewAU", { clear = false })
+  vim.api.nvim_create_autocmd("BufLeave", {
+    group = aug,
+    buffer = buf,   -- fire only for this preview buffer
+    once = true,
+    callback = function()
+      pcall(vim.api.nvim_del_augroup_by_id, aug) -- ensure single-shot
+      vim.ui.select({ "Yes", "No" }, { prompt = "Confirm extract? (You just left the preview)" }, function(choice)
+        if choice == "Yes" then
+          if vim.api.nvim_buf_is_valid(buf) then
+            confirm_and_run()
+          else
+            vim.notify("Preview closed before confirming; nothing done.", vim.log.levels.WARN)
+          end
+        else
+          cancel()
+        end
+      end)
+    end,
+  })
+
+  vim.notify("Preview opened (unfolded). Navigate freely; when you leave this split, you'll get a Yes/No prompt.", vim.log.levels.INFO, { title = "Org extract" })
+end
+
+vim.keymap.set("n", "<leader>oh", function()
+  org_heading_to_tmp_and_run({
+    dir = "~/public",  -- <-- change me
+    ext = ".org",
+    cmd = { "python3", "~/upload.py" },                       -- path is appended
+  })
+end, { desc = "Org: yank heading → preview split (unfolded) → confirm on leave → temp file → run" })
+vim.api.nvim_set_option_value("foldenable", false, { win = win })
+vim.api.nvim_set_option_value("foldmethod", "manual", { win = win })
+vim.api.nvim_set_option_value("foldlevel", 999, { win = win })
+
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
