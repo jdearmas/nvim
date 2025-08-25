@@ -1892,6 +1892,51 @@ vim.api.nvim_set_option_value("foldmethod", "manual", { win = win })
 vim.api.nvim_set_option_value("foldlevel", 999, { win = win })
 
 
+-- A self-contained, intelligent error block for Go
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'go',
+  callback = function()
+    -- Keymap for Normal mode: <leader>ie -> [i]nsert [e]rror block
+    vim.keymap.set('n', '<leader>ie', function()
+      -- 1. Get the current line number and its indentation level
+      local lnum = vim.api.nvim_win_get_cursor(0)[1]
+      local indent_level = vim.fn.indent(lnum)
+      local indent_str = string.rep(' ', indent_level)
+
+      -- 2. Define the code to be inserted
+      -- Using a tab for the inner indent is idiomatic Go.
+      local lines_to_insert = {
+        indent_str .. 'if err != nil {',
+        indent_str .. '\treturn ',
+        indent_str .. '}',
+      }
+
+      -- 3. Replace the current line with the error block
+      vim.api.nvim_buf_set_lines(0, lnum - 1, lnum, false, lines_to_insert)
+
+      -- 4. Move cursor to the end of the 'return' line and enter insert mode
+      vim.api.nvim_win_set_cursor(0, { lnum + 1, #lines_to_insert[2] + 1 })
+      vim.cmd('startinsert')
+    end, { buffer = true, silent = true, desc = 'Insert Go error block' })
+  end,
+  desc = 'Setup Go specific keymaps',
+})
+
+-- Automatically configure :make for Go files
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'go',
+  callback = function()
+    -- Set the command that `:make` will execute in this buffer.
+    -- `go run .` compiles and runs the package in the current directory.
+    vim.bo.makeprg = 'go run .'
+
+    -- Set the format for parsing compiler errors to populate the quickfix list.
+    vim.bo.errorformat = '%f:%l:%c:%m,%f:%l:%m'
+  end,
+  desc = 'Set makeprg and errorformat for Go',
+})
+vim.keymap.set('n', '<C-e>', vim.diagnostic.open_float, { noremap = true, silent = true })
+
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
 
