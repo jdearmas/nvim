@@ -101,7 +101,7 @@ local lsp_attach_callback = function(client, bufnr)
   map('n', '<C-k>', vim.lsp.buf.signature_help, { desc = 'LSP Signature Help' }) -- Standard signature help key
   map('i', '<C-k>', vim.lsp.buf.signature_help, { desc = 'LSP Signature Help' })
   map('n', '<F2>', vim.lsp.buf.rename, { desc = 'LSP Rename' })
-  map({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, { desc = 'LSP Code Action' })
+  -- map({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, { desc = 'LSP Code Action' })
   map('n', '<leader>f', function() vim.lsp.buf.format { async = true } end, { desc = 'LSP Format Buffer' })
 
   -- Workspace management
@@ -1413,7 +1413,7 @@ map('n', 's',        '<Plug>SendLine')
 map({ 'n', 'v' }, '<leader>y', '"+y', { desc = 'Yank to system clipboard' })
 map('n', '<leader>Y', '"+Y', { desc = 'Yank line to system clipboard' })
 map('x', '<leader>p', '"_dP', { desc = 'Paste without yanking deleted text' })
-map('n', '<leader>cp', ':lua copy_full_path_to_clipboard()<CR>', opts) -- Copy file path:line
+map('n', '<leader>pp', ':lua copy_full_path_to_clipboard()<CR>', opts) -- Copy file path:line
 
 -- File Navigation / Fuzzy Finding (Telescope)
 map('n', '<leader>ff', ':Telescope find_files<CR>', opts) -- Find files
