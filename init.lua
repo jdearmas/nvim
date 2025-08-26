@@ -457,6 +457,7 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
       'nvim-telescope/telescope-media-files.nvim',
       'MattesGroeger/vim-bookmarks',
+      { 'amiroslaw/telescope-jumps.nvim' },
     },
     keys = {
       {
@@ -485,6 +486,7 @@ require('lazy').setup({
     },
     config = function()
       local telescope = require 'telescope'
+      telescope.load_extension('jumps')
       local actions = require('telescope.actions')
       local action_layout = require('telescope.actions.layout')
 
@@ -1419,6 +1421,7 @@ map('n', '<leader>fg', ':Telescope live_grep<CR>', opts) -- Live grep
 map('n', "<leader>b",  ':Telescope buffers<CR>', { noremap = true, silent = true })
 map('n', '<leader>fh', ':Telescope help_tags<CR>', opts) -- Find help tags (Added)
 map('n', '<leader>fo', ':Telescope oldfiles<CR>', opts) -- Find oldfiles
+map('n', '<leader>fj', ':Telescope jumps changes<CR>', opts) -- Find oldfiles
 map('n', '<leader>fz', ':FZF<CR>', opts) -- FZF (alternative)
 map('n', '<leader>fc', ':Rg<CR>', opts) -- Ripgrep (fzf.vim)
 map('n', '<leader>fl', ':Telescope lsp_document_symbols<CR>', opts) -- LSP Document Symbols
@@ -1936,6 +1939,10 @@ vim.api.nvim_create_autocmd('FileType', {
   desc = 'Set makeprg and errorformat for Go',
 })
 vim.keymap.set('n', '<C-e>', vim.diagnostic.open_float, { noremap = true, silent = true })
+
+vim.keymap.set('n', 'r', '/', { noremap = true, silent = true })
+vim.keymap.set('n', 'R', '?', { noremap = true, silent = true })
+
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
