@@ -1943,6 +1943,9 @@ vim.keymap.set('n', '<C-e>', vim.diagnostic.open_float, { noremap = true, silent
 vim.keymap.set('n', 'r', '/', { noremap = true, silent = true })
 vim.keymap.set('n', 'R', '?', { noremap = true, silent = true })
 
+-- Remap j/k to PageDown/PageUp without a count
+vim.keymap.set('n', 'j', 'v:count > 0 ? "j" : "<C-f>"', { expr = true, silent = true })
+vim.keymap.set('n', 'k', 'v:count > 0 ? "k" : "<C-b>"', { expr = true, silent = true })
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
