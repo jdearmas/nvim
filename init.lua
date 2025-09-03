@@ -63,7 +63,8 @@ vim.api.nvim_set_hl(0, 'Normal', { bg = '#000000', fg = '#00FF00' }) -- Example 
 vim.api.nvim_set_hl(0, 'NormalFloat', { link = 'Normal' })
 vim.api.nvim_set_hl(0, 'Folded', { bg = 'none' })
 vim.api.nvim_set_hl(0, 'SignColumn', { link = 'Normal' }) -- Avoid distracting sign column background
-
+vim.opt.laststatus = 2
+vim.opt.statusline = "%{mode()} %f %y %m %r%="
 
 -- fix
 -- vim.api.nvim_set_hl(0, 'CustomVertSplit', { guibg = 'green' }) -- Example custom highlight
