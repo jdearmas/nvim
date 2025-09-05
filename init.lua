@@ -663,6 +663,13 @@ require('lazy').setup({
     build = ':lua require("go.install").update_all_sync()' -- if you need to install/update all binaries
   },
   { 'tpope/vim-dispatch' }, -- Load on command
+  {
+    'smoka7/hop.nvim',
+    version = "*",
+    opts = {
+        keys = 'etovxqpdygfblzhckisuran'
+    }
+},
   {'kevinhwang91/nvim-bqf'},
   { 'jdearmas/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' } }, -- Load when dispatch is loaded
 
@@ -1456,7 +1463,7 @@ map('n', "<leader>O", ":lua pipe_messages_to_buffer()<CR>", { noremap = true, si
 
 map('n', ';', ':lua ToggleQuickFix()<CR>', opts) -- Toggle quickfix list
 map('v', '<leader>m', [[:lua SetMakePrgFromVisualSelection()<CR>]], opts) -- Set makeprg from selection
-map('n', 'f', [[:lua ProcessAndSetMakeprg()<CR>]], opts) -- Set makeprg from line comment
+map('n', ',', [[:lua ProcessAndSetMakeprg()<CR>]], opts) -- Set makeprg from line comment
 
 -- Plugin Specific
 map('n', '<leader>u', ':Lf<CR>', opts) -- Lf file manager
@@ -1947,10 +1954,30 @@ vim.keymap.set('n', 'R', '?', { noremap = true, silent = true })
 -- Remap j/k to PageDown/PageUp without a count
 vim.keymap.set('n', 'j', 'v:count > 0 ? "j" : "<C-f>"', { expr = true, silent = true })
 vim.keymap.set('n', 'k', 'v:count > 0 ? "k" : "<C-b>"', { expr = true, silent = true })
+-- place this in one of your configuration file(s)
+local hop = require('hop')
+local directions = require('hop.hint').HintDirection
+vim.keymap.set('', 'f', function()
+  hop.hint_words()
+end, {remap=true})
+vim.keymap.set('', 'F', function()
+  hop.hint_char1({ direction = directions.BEFORE_CURSOR, current_line_only = true })
+end, {remap=true})
+vim.keymap.set('', 't', function()
+  hop.hint_char1({ direction = directions.AFTER_CURSOR, current_line_only = true, hint_offset = -1 })
+end, {remap=true})
+vim.keymap.set('', 'T', function()
+  hop.hint_char1({ direction = directions.BEFORE_CURSOR, current_line_only = true, hint_offset = 1 })
+end, {remap=true})
+
+
+-- Remap j/k to PageDown/PageUp without a count
+vim.keymap.set('n', 'j', 'v:count > 0 ? "j" : "<C-f>"', { expr = true, silent = true })
+vim.keymap.set('n', 'k', 'v:count > 0 ? "k" : "<C-b>"', { expr = true, silent = true })
+
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
-
 
 
 
