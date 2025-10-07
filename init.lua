@@ -102,7 +102,7 @@ local lsp_attach_callback = function(client, bufnr)
   map('n', '<C-k>', vim.lsp.buf.signature_help, { desc = 'LSP Signature Help' }) -- Standard signature help key
   map('i', '<C-k>', vim.lsp.buf.signature_help, { desc = 'LSP Signature Help' })
   map('n', '<F2>', vim.lsp.buf.rename, { desc = 'LSP Rename' })
-  -- map({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, { desc = 'LSP Code Action' })
+  map({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, { desc = 'LSP Code Action' })
   map('n', '<leader>f', function() vim.lsp.buf.format { async = true } end, { desc = 'LSP Format Buffer' })
 
   -- Workspace management
@@ -663,6 +663,132 @@ require('lazy').setup({
     build = ':lua require("go.install").update_all_sync()' -- if you need to install/update all binaries
   },
   { 'tpope/vim-dispatch' }, -- Load on command
+  -- Mason-nvim-dap: The glue between Mason and nvim-dap
+  -- It ensures the debug adapter ('codelldb') is installed and configured.
+  -- In your lazy.nvim plugins list
+    {
+    "mfussenegger/nvim-dap",
+    dependencies = {
+      -- Installs and manages debug adapters automatically
+      {
+        "jay-babu/mason-nvim-dap.nvim",
+        dependencies = { "williamboman/mason.nvim" },
+        -- This is the single, correct way to set up this plugin
+        config = function()
+          require("mason-nvim-dap").setup({
+            ensure_installed = { "codelldb", "debugpy" },
+          })
+        end,
+      },
+
+      -- DAP UI
+      {
+        "rcarriga/nvim-dap-ui",
+        dependencies = { "nvim-neotest/nvim-nio" },
+        -- Configure dap-ui within its own plugin spec
+        config = function()
+          local dapui = require("dapui")
+          dapui.setup({
+            layouts = {
+              {
+                elements = {
+                  { id = "scopes", size = 0.25 },
+                  { id = "breakpoints", size = 0.25 },
+                  { id = "stacks", size = 0.25 },
+                  { id = "watches", size = 0.25 },
+                },
+                size = 40,
+                position = "left",
+              },
+              {
+                elements = {
+                  { id = "repl", size = 0.5 },
+                  { id = "console", size = 0.5 },
+                },
+                size = 10,
+                position = "bottom",
+              },
+            },
+          })
+        end,
+      },
+
+      -- Virtual text for debugging
+      {
+        "theHamsta/nvim-dap-virtual-text",
+        opts = {},
+      },
+    },
+    -- Main config for nvim-dap itself
+    config = function()
+      local dap = require("dap")
+      local dapui = require("dapui")
+
+      -- UI LISTENERS
+      dap.listeners.after.event_initialized["dapui_config"] = dapui.open
+      dap.listeners.before.event_terminated["dapui_config"] = dapui.close
+      dap.listeners.before.event_exited["dapui_config"] = dapui.close
+
+      -- KEYMAPS
+      vim.keymap.set("n", "<leader>db", dap.toggle_breakpoint, { desc = "[D]ebug [B]reakpoint" })
+      vim.keymap.set("n", "<leader>dc", dap.continue, { desc = "[D]ebug [C]ontinue" })
+      vim.keymap.set("n", "<leader>do", dap.step_over, { desc = "[D]ebug Step [O]ver" })
+      vim.keymap.set("n", "<leader>di", dap.step_into, { desc = "[D]ebug Step [I]nto" })
+      vim.keymap.set("n", "<leader>du", dap.step_out, { desc = "[D]ebug Step O[u]t" })
+      vim.keymap.set("n", "<leader>dk", dap.terminate, { desc = "[D]ebug Terminate/[K]ill" })
+      vim.keymap.set("n", "<leader>dr", dapui.toggle, { desc = "[D]ebug [R]epl Toggle" })
+
+      -- LANGUAGE CONFIGURATIONS
+
+      -- Python
+      dap.configurations.python = {
+        {
+          name = "Launch current file",
+          type = "python",
+          request = "launch",
+          program = "${file}",
+          console = "integratedTerminal",
+          python = function()
+            local venv = os.getenv("VIRTUAL_ENV")
+            return (venv and venv ~= "") and (venv .. "/bin/python") or "python3"
+          end,
+        },
+      }
+
+      -- C/C++
+      local cpp_config = {
+        name = "Compile & Launch File",
+        type = "codelldb",
+        request = "launch",
+        program = function()
+          local current_file = vim.fn.expand("%")
+          local executable = vim.fn.expand("%:t:r")
+          local compiler = vim.bo.filetype == "c" and "clang" or "clang++"
+          local compile_command = string.format("%s -g -std=c17 %s -o %s", compiler, current_file, executable)
+          vim.fn.system(compile_command)
+          return vim.fn.getcwd() .. "/" .. executable
+        end,
+        cwd = "${workspaceFolder}",
+        stopOnEntry = false,
+      }
+      dap.configurations.cpp = { cpp_config }
+      dap.configurations.c = { cpp_config }
+
+      -- Rust
+      dap.configurations.rust = {
+        {
+          name = "Launch",
+          type = "codelldb",
+          request = "launch",
+          program = function()
+            return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/target/debug/", "file")
+          end,
+          cwd = "${workspaceFolder}",
+          stopOnEntry = false,
+        },
+      }
+    end,
+  },
   {
     'smoka7/hop.nvim',
     version = "*",
@@ -1501,7 +1627,7 @@ map('v', '<leader>B', [[:<C-u>lua surround_visual_with_bash_org_block()<CR>]], o
 map('n', '<leader>S', '<cmd>lua save_quickfix_to_file()<CR>', opts) -- Save quickfix list
 map('n', '<leader>d', ':lua create_diff_patch()<CR>', opts) -- Create diff patch
 map('n', '<leader>ot', ':lua create_c_template()<CR>', opts) -- Create C template project
-map('n', '<leader>db', ':lua DeleteBuffersMatchingPattern()<CR>', opts) -- Delete buffers by pattern
+-- map('n', '<leader>db', ':lua DeleteBuffersMatchingPattern()<CR>', opts) -- Delete buffers by pattern
 map('n', 'gf', ':lua goto_or_create()<CR>', opts) -- Go to file under cursor (create if needed)
 
 -- Override '<Enter>' for fine-cmdline
