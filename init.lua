@@ -840,7 +840,7 @@ require('lazy').setup({
         p = {
           description = 'New Project Directory',
           -- VVV -- CORRECTED LINE -- VVV
-          target = '%(local name = vim.fn.input("Enter Project Directory Name: "); if name == nil or name == "" then print("Capture aborted."); return "" end; local base_path = "~/org/projects"; local project_dir = vim.fn.expand(base_path) .. "/" .. name; vim.fn.mkdir(project_dir, "p"); return project_dir .. "/index.org")',
+          target = '%(local name = vim.fn.input("Enter Project Directory Name: "); if name == nil or name == "" then print("Capture aborted."); return "" end; local base_path = "~/org"; local project_dir = vim.fn.expand(base_path) .. "/" .. name; vim.fn.mkdir(project_dir, "p"); return project_dir .. "/index.org")',
           -- ^^^ -- CORRECTED LINE -- ^^^
           template = '#+TITLE: %^{Title}\n#+AUTHOR: %n\n\n* TASKS\n** TODO %?',
         },
