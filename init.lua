@@ -125,7 +125,7 @@ require('lazy').setup({
   { 'nvim-tree/nvim-web-devicons', lazy = true }, -- Load when icons are needed
 
   -- LLM Stuff
-  {
+{
   "yetone/avante.nvim",
   -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
   -- ⚠️ must add this setting! ! !
@@ -138,8 +138,9 @@ require('lazy').setup({
   ---@type avante.Config
   opts = {
     -- add any opts here
+    -- this file can contain specific instructions for your project
+    instructions_file = "avante.md",
     -- for example
-    mode = "legacy",
     provider = "claude",
     providers = {
       claude = {
@@ -151,22 +152,13 @@ require('lazy').setup({
             max_tokens = 20480,
           },
       },
-      moonshot = {
-        endpoint = "https://api.moonshot.ai/v1",
-        model = "kimi-k2-0711-preview",
-        timeout = 30000, -- Timeout in milliseconds
-        extra_request_body = {
-          temperature = 0.75,
-          max_tokens = 32768,
-        },
-      },
     },
   },
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
     --- The below dependencies are optional,
-    "echasnovski/mini.pick", -- for file_selector provider mini.pick
+    "nvim-mini/mini.pick", -- for file_selector provider mini.pick
     "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
     "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
     "ibhagwan/fzf-lua", -- for file_selector provider fzf
@@ -201,7 +193,6 @@ require('lazy').setup({
     },
   },
 },
-
   -- LSP & Completion Engine
   {
     'VonHeikemen/lsp-zero.nvim',
@@ -577,7 +568,9 @@ require('lazy').setup({
   { 'folke/which-key.nvim', event = 'VeryLazy', config = function() require('which-key').setup() end }, -- Load very late
   {
     "chipsenkbeil/org-roam.nvim",
+    event = "VeryLazy",
     tag = "0.2.0",
+
     dependencies = {
       {
         "nvim-orgmode/orgmode",
@@ -842,7 +835,16 @@ require('lazy').setup({
     opts = {
       org_agenda_files       = { '~/org/*', '~/orgs/**/*' },
       org_default_notes_file = '~/org/todo.org',
-      org_todo_keywords = {'TODO', '|', 'DONE', 'FAILED'}
+      org_todo_keywords = {'TODO', '|', 'DONE', 'FAILED'},
+      org_capture_templates  = {
+        p = {
+          description = 'New Project Directory',
+          -- VVV -- CORRECTED LINE -- VVV
+          target = '%(local name = vim.fn.input("Enter Project Directory Name: "); if name == nil or name == "" then print("Capture aborted."); return "" end; local base_path = "~/org/projects"; local project_dir = vim.fn.expand(base_path) .. "/" .. name; vim.fn.mkdir(project_dir, "p"); return project_dir .. "/index.org")',
+          -- ^^^ -- CORRECTED LINE -- ^^^
+          template = '#+TITLE: %^{Title}\n#+AUTHOR: %n\n\n* TASKS\n** TODO %?',
+        },
+      },
     },
     config = function(_, opts)
       local api = vim.api
