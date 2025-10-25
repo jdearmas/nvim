@@ -5,6 +5,22 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- Remap navigation from hjkl to jkl;
+-- 'n' = normal mode
+-- 'v' = visual mode
+-- 'o' = operator-pending mode
+local modes = {'n', 'v', 'o'}
+local opts = { noremap = true, silent = true }
+
+-- j moves left
+vim.keymap.set(modes, 'j', 'h', opts)
+-- k moves down
+vim.keymap.set(modes, 'k', 'j', opts)
+-- l moves up
+vim.keymap.set(modes, 'l', 'k', opts)
+-- ; moves right
+vim.keymap.set(modes, ';', 'l', opts)
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -566,27 +582,6 @@ require('lazy').setup({
   -- UI Enhancements & Helpers
   { 'lukas-reineke/indent-blankline.nvim', main = 'ibl', event = 'BufReadPost', config = function() require('ibl').setup() end }, -- Load after buffer read
   { 'folke/which-key.nvim', event = 'VeryLazy', config = function() require('which-key').setup() end }, -- Load very late
-  {
-    "chipsenkbeil/org-roam.nvim",
-    event = "VeryLazy",
-    tag = "0.2.0",
-
-    dependencies = {
-      {
-        "nvim-orgmode/orgmode",
-        tag = "0.7.0",
-      },
-    },
-    config = function()
-      require("org-roam").setup({
-        directory = "~/org",
-        -- optional
-        org_files = {
-          "~/org/*.org",
-        }
-      })
-    end
-  },
     {
     "nvim-orgmode/telescope-orgmode.nvim",
     -- event = "VeryLazy",
@@ -1065,7 +1060,7 @@ autocmd('TermOpen', {
   callback = function()
     local opts = { buffer = 0, noremap = true, silent = true }
     vim.keymap.set('t', '<esc>', [[<C-\><C-n>]], opts)
-    vim.keymap.set('t', 'hs', [[<C-\><C-n>]], opts) -- Custom mapping?
+    vim.keymap.set('t', 'j;', [[<C-\><C-n>]], opts) -- Custom mapping?
     vim.keymap.set('t', '<C-h>', [[<Cmd>wincmd h<CR>]], opts)
     vim.keymap.set('t', '<C-j>', [[<Cmd>wincmd j<CR>]], opts)
     vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], opts)
@@ -1500,10 +1495,10 @@ local opts = { noremap = true, silent = true }
 
 -- General Navigation & Editing
 map({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true }) -- Allow leader key timeout
-map('n', 'j', 'gj', { noremap = true, silent = true, desc = 'Move down visual line' })
-map('n', 'k', 'gk', { noremap = true, silent = true, desc = 'Move up visual line' })
-map('n', 'J', '<PageDown>', { desc = 'Page Down' }) -- Remap J/K for PgUp/PgDn if desired
-map('n', 'K', '<PageUp>', { desc = 'Page Up' }) -- Conflicts with default K (hover) if LSP not mapped differently
+-- map('n', 'j', 'gj', { noremap = true, silent = true, desc = 'Move down visual line' })
+-- map('n', 'k', 'gk', { noremap = true, silent = true, desc = 'Move up visual line' })
+map('n', 'k', '<PageDown>', { desc = 'Page Down' }) -- Remap J/K for PgUp/PgDn if desired
+map('n', 'l', '<PageUp>', { desc = 'Page Up' }) -- Conflicts with default K (hover) if LSP not mapped differently
 map('n', '<BS>', ':bp<CR>', opts) -- Go to previous buffer
 -- map('n', '<leader>w', ':set wrap!<CR>', opts) -- Toggle wrap
 map('n', '<leader>m', ':NoNeckPain<CR>', opts) -- Toggle NoNeckPain
@@ -1602,13 +1597,13 @@ map('n', '<leader>dq', vim.diagnostic.setloclist, { desc = 'Set diagnostics list
 map('n', '<leader>tt', ':lua ToggleDiagnostics()<CR>', opts) -- Toggle diagnostics on/off
 
 -- Running Code / Dispatch / Overseer
-map('n', 'x',         ':Dispatch<CR>', opts) -- Run with Dispatch
+map('n', 'h',         ':Dispatch<CR>', opts) -- Run with Dispatch
 map('n', '<leader>t', ':SendHere<CR>', opts) -- Send line to terminal (nvim-send-to-term)
 -- map('n', '<leader>T', ':OverseerRun<CR>', opts) -- Run with Overseer (Added)
 -- map('n', '<leader>O', ':OverseerToggle<CR>', opts) -- Toggle Overseer window (Added)
 map('n', "<leader>O", ":lua pipe_messages_to_buffer()<CR>", { noremap = true, silent = true })
 
-map('n', ';', ':lua ToggleQuickFix()<CR>', opts) -- Toggle quickfix list
+map('n', 'z', ':lua ToggleQuickFix()<CR>', opts) -- Toggle quickfix list
 map('v', '<leader>m', [[:lua SetMakePrgFromVisualSelection()<CR>]], opts) -- Set makeprg from selection
 map('n', ',', [[:lua ProcessAndSetMakeprg()<CR>]], opts) -- Set makeprg from line comment
 
@@ -1655,8 +1650,7 @@ map('n', 'gf', ':lua goto_or_create()<CR>', opts) -- Go to file under cursor (cr
 map('n', '<CR>', '<cmd>FineCmdline<CR>', { noremap = true })
 
 -- Fix potential conflicts/typos
-map('i', 'hs', '<esc>', opts) -- Escape from insert mode
-map('i', 'hu', '<esc>', opts) -- Escape from insert mode (duplicate?)
+map('i', 'j;', '<esc>', opts) -- Escape from insert mode
 
 
 -- Remove or fix potentially conflicting/unused maps
