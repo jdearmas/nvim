@@ -2111,11 +2111,21 @@ vim.keymap.set('', 'T', function()
   hop.hint_char1({ direction = directions.BEFORE_CURSOR, current_line_only = true, hint_offset = 1 })
 end, {remap=true})
 
+local modes = {'n', 'v', 'o'}
+local opts = { noremap = true, silent = true }
+
+-- j moves left
+vim.keymap.set(modes, 'j', 'h', opts)
+-- k moves down
+vim.keymap.set(modes, 'k', 'j', opts)
+-- l moves up
+vim.keymap.set(modes, 'l', 'k', opts)
+-- ; moves right
+vim.keymap.set(modes, ';', 'l', opts)
 
 -- Remap j/k to PageDown/PageUp without a count
-vim.keymap.set('n', 'j', 'v:count > 0 ? "j" : "<C-f>"', { expr = true, silent = true })
-vim.keymap.set('n', 'k', 'v:count > 0 ? "k" : "<C-b>"', { expr = true, silent = true })
-
+vim.keymap.set('n', 'k', 'v:count > 0 ? "j" : "<C-f>"', { expr = true, silent = true })
+vim.keymap.set('n', 'l', 'v:count > 0 ? "k" : "<C-b>"', { expr = true, silent = true })
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
