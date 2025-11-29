@@ -12,15 +12,6 @@ vim.g.maplocalleader = ' '
 local modes = {'n', 'v', 'o'}
 local opts = { noremap = true, silent = true }
 
--- j moves left
-vim.keymap.set(modes, 'j', 'h', opts)
--- k moves down
-vim.keymap.set(modes, 'k', 'j', opts)
--- l moves up
-vim.keymap.set(modes, 'l', 'k', opts)
--- ; moves right
-vim.keymap.set(modes, ';', 'l', opts)
-
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -669,6 +660,33 @@ require('lazy').setup({
     ft = {"go", 'gomod'},
     build = ':lua require("go.install").update_all_sync()' -- if you need to install/update all binaries
   },
+{ 'mrjones2014/smart-splits.nvim' },
+
+{
+  "otavioschwanck/tmux-awesome-manager.nvim",
+  dependencies = {
+    "nvim-telescope/telescope.nvim", -- Optional: for telescope picker
+    -- OR
+    -- "ibhagwan/fzf-lua", -- Optional: for fzf-lua picker
+  },
+  config = function()
+    require('tmux-awesome-manager').setup({
+      per_project_commands = { -- Configure your per project servers with
+      -- project name = { { cmd, name } }
+        api = { { cmd = 'rails server', name = 'Rails Server' } },
+        front = { { cmd = 'yarn dev', name = 'react server' } },
+      },
+      session_name = 'Neovim Terminals',
+      use_icon = false, -- use prefix icon
+      picker = 'telescope', -- 🔍 Choose picker: 'telescope' or 'fzf-lua' (default: 'telescope')
+      icon = ' ', -- Prefix icon to use
+      -- project_open_as = 'window', -- Open per_project_commands as.  Default: separated_session
+      -- default_size = '30%', -- on panes, the default size
+      -- open_new_as = 'window', -- open new command as.  options: pane, window, separated_session.
+      -- default_orientation = 'vertical' -- Can also be horizontal
+    })
+  end
+},
   { 'tpope/vim-dispatch' }, -- Load on command
   -- Mason-nvim-dap: The glue between Mason and nvim-dap
   -- It ensures the debug adapter ('codelldb') is installed and configured.
@@ -1040,18 +1058,18 @@ local autocmd = vim.api.nvim_create_autocmd
 local user_augroup = augroup('UserAuCmds', { clear = true })
 
 -- Auto format on save (ensure Neoformat is loaded)
--- autocmd('BufWritePre', {
---   group = user_augroup,
---   pattern = '*',
---   callback = function()
---     -- Use pcall in case neoformat isn't loaded or fails
---     local success, _ = pcall(vim.cmd, 'silent! Neoformat')
---     if not success then
---       -- print("Neoformat not available or failed.")
---     end
---   end,
---   desc = 'Auto format buffer on save using Neoformat',
--- })
+autocmd('BufWritePre', {
+  group = user_augroup,
+  pattern = '*',
+  callback = function()
+    -- Use pcall in case neoformat isn't loaded or fails
+    local success, _ = pcall(vim.cmd, 'silent! Neoformat')
+    if not success then
+      -- print("Neoformat not available or failed.")
+    end
+  end,
+  desc = 'Auto format buffer on save using Neoformat',
+})
 
 -- Define keymaps for terminal buffers when they open
 autocmd('TermOpen', {
@@ -1497,8 +1515,8 @@ local opts = { noremap = true, silent = true }
 map({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true }) -- Allow leader key timeout
 -- map('n', 'j', 'gj', { noremap = true, silent = true, desc = 'Move down visual line' })
 -- map('n', 'k', 'gk', { noremap = true, silent = true, desc = 'Move up visual line' })
-map('n', 'k', '<PageDown>', { desc = 'Page Down' }) -- Remap J/K for PgUp/PgDn if desired
-map('n', 'l', '<PageUp>', { desc = 'Page Up' }) -- Conflicts with default K (hover) if LSP not mapped differently
+map('n', 'j', '<PageDown>', { desc = 'Page Down' }) -- Remap J/K for PgUp/PgDn if desired
+map('n', 'k', '<PageUp>', { desc = 'Page Up' }) -- Conflicts with default K (hover) if LSP not mapped differently
 map('n', '<BS>', ':bp<CR>', opts) -- Go to previous buffer
 -- map('n', '<leader>w', ':set wrap!<CR>', opts) -- Toggle wrap
 map('n', '<leader>m', ':NoNeckPain<CR>', opts) -- Toggle NoNeckPain
@@ -1603,9 +1621,9 @@ map('n', '<leader>t', ':SendHere<CR>', opts) -- Send line to terminal (nvim-send
 -- map('n', '<leader>O', ':OverseerToggle<CR>', opts) -- Toggle Overseer window (Added)
 map('n', "<leader>O", ":lua pipe_messages_to_buffer()<CR>", { noremap = true, silent = true })
 
-map('n', 'z', ':lua ToggleQuickFix()<CR>', opts) -- Toggle quickfix list
+map('n', ',', ':lua ToggleQuickFix()<CR>', opts) -- Toggle quickfix list
 map('v', '<leader>m', [[:lua SetMakePrgFromVisualSelection()<CR>]], opts) -- Set makeprg from selection
-map('n', ',', [[:lua ProcessAndSetMakeprg()<CR>]], opts) -- Set makeprg from line comment
+map('n', ';', [[:lua ProcessAndSetMakeprg()<CR>]], opts) -- Set makeprg from line comment
 
 -- Plugin Specific
 map('n', '<leader>u', ':Lf<CR>', opts) -- Lf file manager
@@ -2114,21 +2132,22 @@ end, {remap=true})
 local modes = {'n', 'v', 'o'}
 local opts = { noremap = true, silent = true }
 
--- j moves left
-vim.keymap.set(modes, 'j', 'h', opts)
--- k moves down
-vim.keymap.set(modes, 'k', 'j', opts)
--- l moves up
-vim.keymap.set(modes, 'l', 'k', opts)
--- ; moves right
-vim.keymap.set(modes, ';', 'l', opts)
-
 -- Remap j/k to PageDown/PageUp without a count
-vim.keymap.set('n', 'k', 'v:count > 0 ? "j" : "<C-f>"', { expr = true, silent = true })
-vim.keymap.set('n', 'l', 'v:count > 0 ? "k" : "<C-b>"', { expr = true, silent = true })
+vim.keymap.set('n', 'j', 'v:count > 0 ? "j" : "<C-f>"', { expr = true, silent = true })
+vim.keymap.set('n', 'k', 'v:count > 0 ? "k" : "<C-b>"', { expr = true, silent = true })
+
+vim.keymap.set('n', '<leader>gk', function()
+local base = vim.fn.system("git config neogit.baseBranch"):gsub("%s+", "")
+  if base == "" then base = "origin/develop" end
+  vim.cmd("DiffviewOpen " .. base .. "...HEAD")
+end)
+
+vim.keymap.set('n', '<leader>gK', function()
+local base = vim.fn.system("git config neogit.baseBranch"):gsub("%s+", "")
+  if base == "" then base = "origin/develop" end
+  vim.cmd("DiffviewOpen " .. base)
+end)
+
 
 -- print(vim.fn.stdpath('data'))
 print 'speed is life' -- Confirmation message
-
-
-
