@@ -1,0 +1,3 @@
+# Local configuration (contains personal paths)
+lua/local/dap_paths.lua
+
