@@ -4,6 +4,15 @@
 return {
   {
     "mfussenegger/nvim-dap",
+    keys = {
+      { "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "Debug: Toggle Breakpoint" },
+      { "<leader>dB", function() require("dap").set_breakpoint(vim.fn.input("Condition: ")) end, desc = "Debug: Conditional Breakpoint" },
+      { "<leader>dc", function() require("dap").continue() end, desc = "Debug: Start/Continue" },
+      { "<leader>dr", function() require("dapui").toggle() end, desc = "Debug: Toggle UI" },
+      { "<leader>dR", function() require("dap").run_last() end, desc = "Debug: Run Last" },
+      { "<leader>dk", function() require("dap").terminate() end, desc = "Debug: Terminate" },
+    },
+    cmd = { "DapContinue", "DapToggleBreakpoint" },
     dependencies = {
       {
         "jay-babu/mason-nvim-dap.nvim",
@@ -276,15 +285,6 @@ return {
         dapui.close()
       end
 
-      -- Global keymaps
-      vim.keymap.set("n", "<leader>db", dap.toggle_breakpoint, { desc = "Debug: Toggle Breakpoint" })
-      vim.keymap.set("n", "<leader>dB", function()
-        dap.set_breakpoint(vim.fn.input("Condition: "))
-      end, { desc = "Debug: Conditional Breakpoint" })
-      vim.keymap.set("n", "<leader>dc", dap.continue, { desc = "Debug: Start/Continue" })
-      vim.keymap.set("n", "<leader>dr", dapui.toggle, { desc = "Debug: Toggle UI" })
-      vim.keymap.set("n", "<leader>dR", dap.run_last, { desc = "Debug: Run Last" })
-      vim.keymap.set("n", "<leader>dk", dap.terminate, { desc = "Debug: Terminate" })
     end,
   },
 }

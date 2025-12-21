@@ -4,13 +4,15 @@
 return {
   {
     "MattesGroeger/vim-bookmarks",
+    keys = { 'mm', 'mi', 'mn', 'mp', 'ma', 'mc', 'mx' },
+    cmd = { 'BookmarkToggle', 'BookmarkAnnotate', 'BookmarkShowAll' },
     config = function()
       vim.g.bookmark_sign = "⚑"
       vim.g.bookmark_highlight_lines = 1
     end,
   },
 
-  { "tom-anders/telescope-vim-bookmarks.nvim" },
+  { "tom-anders/telescope-vim-bookmarks.nvim", lazy = true },
 
   {
     'nvim-telescope/telescope.nvim',

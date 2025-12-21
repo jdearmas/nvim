@@ -43,7 +43,7 @@ autocmd('VimResized', {
   desc = 'Resize splits equally on Vim resize',
 })
 
--- Ensure directory exists before writing buffer
+-- Ensure directory exists before writing buffer (handles both new and existing files)
 autocmd('BufWritePre', {
   group = user_augroup,
   pattern = '*',
@@ -53,76 +53,52 @@ autocmd('BufWritePre', {
   desc = 'Ensure directory exists before writing buffer',
 })
 
--- Ensure directory exists for new files
-autocmd('BufNewFile', {
-  group = user_augroup,
-  pattern = '*',
-  callback = function(ev)
-    fn.ensure_directory(ev.match)
-  end,
-  desc = 'Ensure directory exists for new files',
-})
-
--- Configure Neoformat for Python with virtualenv
+-- Consolidated FileType autocommands for better performance
 autocmd('FileType', {
   group = user_augroup,
-  pattern = 'python',
-  callback = function()
-    local venv = os.getenv('VIRTUAL_ENV')
-    if venv then
-      local venv_ruff = venv .. '/bin/ruff'
-      if vim.fn.executable(venv_ruff) == 1 then
-        vim.g.neoformat_python_ruff.exe = venv_ruff
+  pattern = { 'python', 'qf', 'go', 'rust' },
+  callback = function(ev)
+    local ft = ev.match
+
+    if ft == 'python' then
+      -- Configure Neoformat for Python with virtualenv
+      local venv = os.getenv('VIRTUAL_ENV')
+      if venv then
+        local venv_ruff = venv .. '/bin/ruff'
+        if vim.fn.executable(venv_ruff) == 1 then
+          vim.g.neoformat_python_ruff.exe = venv_ruff
+        end
       end
+
+    elseif ft == 'qf' then
+      -- Quickfix window height
+      local height = math.floor(vim.o.lines / 2)
+      vim.cmd(height .. "wincmd _")
+
+    elseif ft == 'go' then
+      -- Go-specific settings
+      vim.bo.makeprg = 'go run .'
+      vim.bo.errorformat = '%f:%l:%c:%m,%f:%l:%m'
+      vim.keymap.set('n', '<leader>ie', function()
+        local lnum = vim.api.nvim_win_get_cursor(0)[1]
+        local indent_level = vim.fn.indent(lnum)
+        local indent_str = string.rep(' ', indent_level)
+        local lines_to_insert = {
+          indent_str .. 'if err != nil {',
+          indent_str .. '\treturn ',
+          indent_str .. '}',
+        }
+        vim.api.nvim_buf_set_lines(0, lnum - 1, lnum, false, lines_to_insert)
+        vim.api.nvim_win_set_cursor(0, { lnum + 1, #lines_to_insert[2] + 1 })
+        vim.cmd('startinsert')
+      end, { buffer = true, silent = true, desc = 'Insert Go error block' })
+
+    elseif ft == 'rust' then
+      -- Rust makeprg
+      vim.bo.makeprg = 'cargo run'
     end
   end,
-})
-
--- Quickfix window height
-autocmd("FileType", {
-  group = user_augroup,
-  pattern = "qf",
-  callback = function()
-    local height = math.floor(vim.o.lines / 2)
-    vim.cmd(height .. "wincmd _")
-  end,
-})
-
--- Go-specific settings
-autocmd('FileType', {
-  group = user_augroup,
-  pattern = 'go',
-  callback = function()
-    vim.bo.makeprg = 'go run .'
-    vim.bo.errorformat = '%f:%l:%c:%m,%f:%l:%m'
-
-    -- Insert Go error block
-    vim.keymap.set('n', '<leader>ie', function()
-      local lnum = vim.api.nvim_win_get_cursor(0)[1]
-      local indent_level = vim.fn.indent(lnum)
-      local indent_str = string.rep(' ', indent_level)
-
-      local lines_to_insert = {
-        indent_str .. 'if err != nil {',
-        indent_str .. '\treturn ',
-        indent_str .. '}',
-      }
-
-      vim.api.nvim_buf_set_lines(0, lnum - 1, lnum, false, lines_to_insert)
-      vim.api.nvim_win_set_cursor(0, { lnum + 1, #lines_to_insert[2] + 1 })
-      vim.cmd('startinsert')
-    end, { buffer = true, silent = true, desc = 'Insert Go error block' })
-  end,
-  desc = 'Setup Go specific settings and keymaps',
-})
-
--- Rust makeprg
-autocmd('FileType', {
-  group = user_augroup,
-  pattern = 'rust',
-  callback = function()
-    vim.bo.makeprg = 'cargo run'
-  end,
+  desc = 'Filetype-specific settings (python, qf, go, rust)',
 })
 
 -- Org file auto-indent on save

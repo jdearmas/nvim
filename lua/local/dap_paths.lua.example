@@ -1,0 +1,12 @@
+-- Local DAP paths configuration
+-- Copy this to lua/local/dap_paths.lua and customize
+
+return {
+  project_root = "/path/to/your/project",
+  python_path = "/path/to/your/project/.venv/bin/python",
+  pythonpath_dirs = {
+    "/path/to/your/project/src",
+    -- Add more directories as needed
+  },
+}
+

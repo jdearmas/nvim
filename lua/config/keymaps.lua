@@ -58,18 +58,6 @@ map('i', 'jk', '<esc>', { silent = true, desc = "Escape" })
 -- File rename
 map('n', 'F', ':f ', { desc = "Rename buffer" })
 
--- Hop (motion)
-map('', 'f', function() require('hop').hint_words() end, { remap = true, desc = "Hop words" })
-map('', 'F', function()
-  require('hop').hint_char1({ direction = require('hop.hint').HintDirection.BEFORE_CURSOR, current_line_only = true })
-end, { remap = true, desc = "Hop char backward" })
-map('', 't', function()
-  require('hop').hint_char1({ direction = require('hop.hint').HintDirection.AFTER_CURSOR, current_line_only = true, hint_offset = -1 })
-end, { remap = true, desc = "Hop till char forward" })
-map('', 'T', function()
-  require('hop').hint_char1({ direction = require('hop.hint').HintDirection.BEFORE_CURSOR, current_line_only = true, hint_offset = 1 })
-end, { remap = true, desc = "Hop till char backward" })
-
 -- Visual mode: fold except selection
 map('v', 'a', fn.fold_except_selection, { desc = "Fold except selection", silent = true })
 

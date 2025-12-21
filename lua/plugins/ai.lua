@@ -4,7 +4,8 @@
 return {
   {
     "yetone/avante.nvim",
-    event = "VeryLazy",
+    cmd = { "AvanteAsk", "AvanteChat", "AvanteToggle" },
+    keys = { { "<leader>aa", "<cmd>AvanteAsk<cr>", desc = "Avante Ask" } },
     version = false,
     build = vim.fn.has("win32") ~= 0
         and "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"

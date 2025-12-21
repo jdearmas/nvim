@@ -67,43 +67,6 @@ function M.goto_or_create()
   end
 end
 
--- Delete buffers matching a pattern
-function M.delete_buffers_matching_pattern()
-  local pattern = vim.fn.input 'Enter regex pattern to delete buffers: '
-  if pattern == '' then
-    print 'No pattern entered.'
-    return
-  end
-  local buffers_deleted = 0
-  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(bufnr) then
-      local bufname = vim.api.nvim_buf_get_name(bufnr)
-      if bufname ~= '' and string.match(bufname, pattern) then
-        local bufinfo = vim.fn.getbufinfo(bufnr)[1]
-        if bufinfo and not bufinfo.hidden and not bufinfo.listed then
-          goto continue
-        end
-        if bufinfo and bufinfo.windows and #bufinfo.windows > 0 then
-          print('Skipping deletion, buffer displayed in a window: ' .. bufname)
-        elseif bufinfo and bufinfo.changed == 1 then
-          local choice = vim.fn.input('Buffer is modified. Force delete? (y/N): ' .. bufname .. ' ')
-          if string.lower(choice) == 'y' then
-            vim.api.nvim_buf_delete(bufnr, { force = true })
-            buffers_deleted = buffers_deleted + 1
-          else
-            print('Skipping deletion of modified buffer: ' .. bufname)
-          end
-        else
-          vim.api.nvim_buf_delete(bufnr, { force = false })
-          buffers_deleted = buffers_deleted + 1
-        end
-      end
-    end
-    ::continue::
-  end
-  vim.notify(string.format('Deleted %d buffers matching pattern "%s"', buffers_deleted, pattern), vim.log.levels.INFO)
-end
-
 -- Set makeprg from visual selection
 function M.set_makeprg_from_visual_selection()
   local old_reg = vim.fn.getreg '"'
@@ -142,23 +105,6 @@ function M.process_and_set_makeprg()
   local ns = vim.api.nvim_create_namespace 'makeprg_highlight'
   vim.api.nvim_buf_add_highlight(0, ns, 'Visual', vim.fn.line('.') - 1, 0, -1)
   vim.defer_fn(function() vim.api.nvim_buf_clear_namespace(0, ns, 0, -1) end, 750)
-end
-
--- Create diff patch
-function M.create_diff_patch()
-  local filepath = vim.fn.expand '%:p'
-  if vim.fn.empty(filepath) == 1 or vim.fn.filereadable(filepath) == 0 then
-    print 'Cannot diff: File not saved or does not exist.'
-    return
-  end
-  local patchfile = filepath .. '.patch'
-  local cmd = string.format('write !diff -u %s - > %s', vim.fn.shellescape(filepath), vim.fn.shellescape(patchfile))
-  local success, result = pcall(vim.cmd, cmd)
-  if success then
-    vim.notify('Patch created: ' .. patchfile, vim.log.levels.INFO)
-  else
-    vim.notify('Error creating patch: ' .. tostring(result), vim.log.levels.ERROR)
-  end
 end
 
 -- Toggle diagnostics
@@ -279,9 +225,9 @@ function M.close_undisplayed_buffers()
 
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if not displayed_buffers[buf] then
-      local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
-      local modifiable = vim.api.nvim_buf_get_option(buf, "modifiable")
-      local modified = vim.api.nvim_buf_get_option(buf, "modified")
+      local buftype = vim.bo[buf].buftype
+      local modifiable = vim.bo[buf].modifiable
+      local modified = vim.bo[buf].modified
       local name = vim.api.nvim_buf_get_name(buf)
 
       if modifiable and modified and buftype == "" and name ~= "" then
@@ -387,9 +333,9 @@ function M.fold_except_selection()
     return
   end
 
-  api.nvim_win_set_option(winnr, "foldmethod", "manual")
-  api.nvim_win_set_option(winnr, "foldenable", true)
-  api.nvim_win_set_option(winnr, "foldminlines", 1)
+  vim.wo[winnr].foldmethod = "manual"
+  vim.wo[winnr].foldenable = true
+  vim.wo[winnr].foldminlines = 1
 
   vim.cmd("silent! normal! zE")
 

@@ -3,7 +3,7 @@
 
 return {
   -- Rust
-  { 'mrcjkb/rustaceanvim' },
+  { 'mrcjkb/rustaceanvim', ft = 'rust' },
 
   -- Go
   {

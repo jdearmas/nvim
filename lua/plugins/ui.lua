@@ -45,19 +45,13 @@ return {
   {
     'shortcuts/no-neck-pain.nvim',
     version = '*',
-    config = function()
-      require("no-neck-pain").setup({
-        buffers = {
-          scratchPad = {
-            enabled = false,
-            location = "~/Documents/",
-          },
-          bo = {
-            filetype = "md",
-          },
-        },
-      })
-    end
+    cmd = 'NoNeckPain',
+    opts = {
+      buffers = {
+        scratchPad = { enabled = false, location = "~/Documents/" },
+        bo = { filetype = "md" },
+      },
+    },
   },
 
   -- Focus modes
@@ -65,10 +59,10 @@ return {
   { 'pocco81/true-zen.nvim', cmd = { 'TZFocus', 'TZMinimalist', 'TZAtaraxis', 'TZNarrow' }, config = true },
 
   -- Taboo (tab renaming)
-  { 'jdearmas/taboo', event = 'BufWinEnter', config = true },
+  { 'jdearmas/taboo', cmd = 'TabooRename', event = 'TabNew', config = true },
 
   -- Window picker
-  { 'yorickpeterse/nvim-window', keys = { { 'n', '<leader>w' } }, config = true },
+  { 'yorickpeterse/nvim-window', keys = { { '<leader>w', function() require('nvim-window').pick() end, desc = 'Pick window' } }, config = true },
 
   -- Snacks (picker & input)
   {
@@ -84,21 +78,21 @@ return {
   -- Command line
   {
     'VonHeikemen/fine-cmdline.nvim',
+    cmd = 'FineCmdline',
+    keys = { { '<CR>', '<cmd>FineCmdline<CR>', mode = 'n', desc = 'Command line' } },
     dependencies = { 'MunifTanjim/nui.nvim' },
-    config = function()
-      require('fine-cmdline').setup {
-        cmdline = { enable_keymaps = true, smart_history = true, prompt = ': ' },
-        popup = {
-          position = { row = '50%', col = '50%' },
-          size = { width = '60%' },
-          border = { style = 'rounded' },
-          win_options = { winhighlight = 'Normal:Normal,FloatBorder:FloatBorder' }
-        },
-      }
-    end
+    opts = {
+      cmdline = { enable_keymaps = true, smart_history = true, prompt = ': ' },
+      popup = {
+        position = { row = '50%', col = '50%' },
+        size = { width = '60%' },
+        border = { style = 'rounded' },
+        win_options = { winhighlight = 'Normal:Normal,FloatBorder:FloatBorder' }
+      },
+    },
   },
 
   -- Quickfix enhancement
-  { 'kevinhwang91/nvim-bqf' },
+  { 'kevinhwang91/nvim-bqf', ft = 'qf' },
 }
 

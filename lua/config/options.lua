@@ -26,7 +26,7 @@ opt.statusline = "%{mode()} %f %y %m %r%="
 opt.list = true
 opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 opt.fillchars = { eob = ' ' }
-opt.scrollback = 100000
+opt.scrollback = 10000  -- Reduced from 100000 for better memory usage
 
 -- Splits
 opt.splitright = true
@@ -62,23 +62,28 @@ opt.diffopt:append("vertical")
 -- Directory
 opt.autochdir = true
 
--- Background and highlights
-vim.cmd [[set background=dark]]
+-- Background and highlights (deferred for faster startup)
+opt.background = 'dark'
 
-local hl = vim.api.nvim_set_hl
-hl(0, 'Normal', { bg = '#000000', fg = '#00FF00' })
-hl(0, 'NormalFloat', { link = 'Normal' })
-hl(0, 'Folded', { bg = 'none' })
-hl(0, 'SignColumn', { link = 'Normal' })
-hl(0, 'DiffDelete', { fg = '#FF0000', bg = 'NONE' })
-hl(0, 'DiffAdd', { fg = '#00ff00', bg = 'NONE' })
-hl(0, 'DiffContext', { fg = 'gray', bg = 'NONE' })
-hl(0, 'NeogitDiffDelete', { link = 'DiffDelete' })
-hl(0, 'NeogitDiffAdd', { link = 'DiffAdd' })
-hl(0, 'NeogitDiffContext', { link = 'DiffContext' })
-hl(0, 'NeogitDiffDeleteHighlight', { link = 'DiffDelete' })
-hl(0, 'NeogitDiffAddHighlight', { link = 'DiffAdd' })
-hl(0, 'NeogitDiffContextHighlight', { link = 'DiffContext' })
+vim.api.nvim_create_autocmd('UIEnter', {
+  once = true,
+  callback = function()
+    local hl = vim.api.nvim_set_hl
+    hl(0, 'Normal', { bg = '#000000', fg = '#00FF00' })
+    hl(0, 'NormalFloat', { link = 'Normal' })
+    hl(0, 'Folded', { bg = 'none' })
+    hl(0, 'SignColumn', { link = 'Normal' })
+    hl(0, 'DiffDelete', { fg = '#FF0000', bg = 'NONE' })
+    hl(0, 'DiffAdd', { fg = '#00ff00', bg = 'NONE' })
+    hl(0, 'DiffContext', { fg = 'gray', bg = 'NONE' })
+    -- Link Neogit highlights to Diff highlights
+    for _, suffix in ipairs({ '', 'Highlight' }) do
+      hl(0, 'NeogitDiffDelete' .. suffix, { link = 'DiffDelete' })
+      hl(0, 'NeogitDiffAdd' .. suffix, { link = 'DiffAdd' })
+      hl(0, 'NeogitDiffContext' .. suffix, { link = 'DiffContext' })
+    end
+  end,
+})
 
 -- Dispatch options
 g.dispatch_no_tmux_make = 1

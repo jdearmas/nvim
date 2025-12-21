@@ -72,8 +72,8 @@ return {
   {
     'nvim-treesitter/nvim-treesitter-context',
     dependencies = 'nvim-treesitter/nvim-treesitter',
-    event = 'BufWinEnter',
-    config = true,
+    event = 'BufReadPost',
+    opts = { max_lines = 3 },
   },
 }
 

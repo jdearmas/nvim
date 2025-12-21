@@ -38,7 +38,7 @@ return {
     },
     config = function(_, opts)
       local api = vim.api
-      local uv = vim.loop
+      local uv = vim.uv
 
       -- Stopwatch state
       local state = {
