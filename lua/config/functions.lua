@@ -473,5 +473,36 @@ function M.org_heading_to_tmp_and_run(opts)
   vim.notify("Preview opened (unfolded). When you leave this split, you'll get a Yes/No prompt.", vim.log.levels.INFO, { title = "Org extract" })
 end
 
+-- Reload Neovim configuration
+function M.reload_config()
+  -- Clear module cache for config modules
+  for module_name, _ in pairs(package.loaded) do
+    if module_name:match('^config%.') or module_name:match('^plugins%.') then
+      package.loaded[module_name] = nil
+    end
+  end
+  
+  -- Clear old autocommands in custom groups
+  local augroups = vim.api.nvim_get_autocmds({})
+  local custom_groups = {}
+  for _, au in ipairs(augroups) do
+    if au.group_name and not au.group_name:match('^%w+Internal') then
+      custom_groups[au.group_name] = true
+    end
+  end
+  for group, _ in pairs(custom_groups) do
+    pcall(vim.api.nvim_del_augroup_by_name, group)
+  end
+  
+  -- Source init.lua
+  vim.cmd("source " .. vim.fn.stdpath("config") .. "/init.lua")
+  
+  -- Sync lazy.nvim plugins
+  vim.schedule(function()
+    require("lazy").sync({ wait = true })
+    vim.notify("Configuration reloaded!", vim.log.levels.INFO, { title = "Neovim Config" })
+  end)
+end
+
 return M
 

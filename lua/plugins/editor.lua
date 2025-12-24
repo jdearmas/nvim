@@ -36,7 +36,6 @@ return {
     version = "*",
     keys = {
       { 'f', function() require('hop').hint_words() end, mode = '', desc = "Hop words" },
-      { 'F', function() require('hop').hint_char1({ direction = require('hop.hint').HintDirection.BEFORE_CURSOR, current_line_only = true }) end, mode = '', desc = "Hop char backward" },
       { 't', function() require('hop').hint_char1({ direction = require('hop.hint').HintDirection.AFTER_CURSOR, current_line_only = true, hint_offset = -1 }) end, mode = '', desc = "Hop till char forward" },
       { 'T', function() require('hop').hint_char1({ direction = require('hop.hint').HintDirection.BEFORE_CURSOR, current_line_only = true, hint_offset = 1 }) end, mode = '', desc = "Hop till char backward" },
     },
@@ -86,8 +85,7 @@ return {
   -- Legendary (command palette)
   {
     'mrjones2014/legendary.nvim',
-    keys = { { '<leader>ll', ':Legendary<CR>', desc = 'Open Legendary' } },
-    cmd = 'Legendary',
+    event = 'VeryLazy',
     dependencies = { 'kkharji/sqlite.lua' },
     config = function()
       local file_path = vim.fn.stdpath('data') .. '/legendary-commands.json'
@@ -176,7 +174,7 @@ return {
   { 'sbdchd/neoformat', cmd = 'Neoformat', event = 'BufWritePre' },
   { 'ptzz/lf.vim', cmd = 'Lf', dependencies = { 'voldikss/vim-floaterm' } },
   { 'mattn/emmet-vim', ft = { 'html', 'css', 'javascript', 'typescript', 'jsx', 'tsx' } },
-  { 'tpope/vim-dispatch', cmd = { 'Dispatch', 'Make', 'Focus', 'Start' } },
-  { 'jdearmas/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' }, cmd = 'Dispatch' },
+  { 'tpope/vim-dispatch' },
+  { 'jdearmas/vim-dispatch-neovim', dependencies = { 'tpope/vim-dispatch' } },
 }
 

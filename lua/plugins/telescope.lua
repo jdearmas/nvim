@@ -48,6 +48,61 @@ return {
         end,
         desc = "Buffers (with preview)",
       },
+      {
+        "<leader>fT",
+        function()
+          local pickers = require("telescope.pickers")
+          local finders = require("telescope.finders")
+          local conf = require("telescope.config").values
+          local actions = require("telescope.actions")
+          local action_state = require("telescope.actions.state")
+          local previewers = require("telescope.previewers")
+
+          local tabs = {}
+          for i = 1, vim.fn.tabpagenr("$") do
+            local tabnr = i
+            local winnr = vim.fn.tabpagewinnr(i)
+            local bufnr = vim.fn.tabpagebuflist(i)[winnr]
+            local bufname = vim.fn.bufname(bufnr)
+            if bufname == "" then
+              bufname = "[No Name]"
+            end
+            table.insert(tabs, {
+              tabnr = tabnr,
+              bufnr = bufnr,
+              display = string.format("Tab %d: %s", tabnr, vim.fn.fnamemodify(bufname, ":t")),
+              filename = bufname,
+            })
+          end
+
+          pickers.new({}, {
+            prompt_title = "Tabs",
+            finder = finders.new_table({
+              results = tabs,
+              entry_maker = function(entry)
+                return {
+                  value = entry,
+                  display = entry.display,
+                  ordinal = entry.display,
+                  filename = entry.filename,
+                  bufnr = entry.bufnr,
+                }
+              end,
+            }),
+            sorter = conf.generic_sorter({}),
+            previewer = conf.file_previewer({}),
+            attach_mappings = function(prompt_bufnr, map)
+              actions.select_default:replace(function()
+                actions.close(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                vim.cmd("tabn " .. selection.value.tabnr)
+              end)
+              return true
+            end,
+          }):find()
+        end,
+        desc = "Tabs (with preview)",
+      },
     },
     config = function()
       local telescope = require 'telescope'

@@ -14,25 +14,46 @@ return {
   },
 
   {
-    'sindrets/diffview.nvim',
-    cmd = { 'DiffviewOpen', 'DiffviewClose', 'DiffviewToggleFiles', 'DiffviewFocusFiles' },
-    config = function()
-      require('diffview').setup {
-        enhanced_diff_hl = true,
-        view = {
-          merge_tool = {
-            layout = "diff3_mixed",
-          },
-          file_panel = {
-            listing_style = "tree",
-            win_config = {
-              position = "left",
-              width = 50,
-            },
-          },
+    "sindrets/diffview.nvim",
+    cmd = { "DiffviewOpen", "DiffviewFileHistory", "DiffviewClose" },
+    keys = {
+      { "<leader>gd", "<cmd>DiffviewOpen<cr>", desc = "Open Diffview" },
+      { "<leader>gh", "<cmd>DiffviewFileHistory %<cr>", desc = "File History" },
+    },
+    opts = {
+      enhanced_diff_hl = true,
+      file_panel = {
+        win_config = {
+          position = "left",
+          width = 50,
         },
-      }
-    end,
+      },
+      hooks = {
+        diff_buf_read = function(bufnr, ctx)
+          -- Get the buffer name to determine filetype
+          local bufname = vim.api.nvim_buf_get_name(bufnr)
+
+          -- Try to detect filetype from buffer name/content
+          local ft = vim.filetype.match({ buf = bufnr, filename = bufname })
+
+          if ft and ft ~= "" then
+            vim.bo[bufnr].filetype = ft
+          else
+            -- Fallback: run filetype detect command
+            vim.api.nvim_buf_call(bufnr, function()
+              vim.cmd("filetype detect")
+            end)
+          end
+
+          -- Ensure syntax is enabled
+          vim.api.nvim_buf_call(bufnr, function()
+            if vim.bo.syntax == "" then
+              vim.cmd("syntax enable")
+            end
+          end)
+        end,
+      },
+    },
   },
 
   {

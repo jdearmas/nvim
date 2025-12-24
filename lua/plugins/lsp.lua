@@ -3,12 +3,15 @@
 
 ---@type table<string, vim.lsp.Config>
 local server_configs = {
-  -- Lua: configured for Neovim development (lazydev handles workspace/library)
+  -- Lua: configured for Neovim development
   lua_ls = {
     settings = {
       Lua = {
         runtime = { version = 'LuaJIT' },
-        workspace = { checkThirdParty = false },
+        workspace = {
+          checkThirdParty = false,
+          library = vim.api.nvim_get_runtime_file('', true),
+        },
         diagnostics = { globals = { 'vim' } },
         telemetry = { enable = false },
         completion = { callSnippet = 'Replace' },
@@ -56,8 +59,22 @@ local server_configs = {
       },
     },
   },
-  -- JSON with schema support (schemas loaded in handler to avoid early require)
-  jsonls = {},
+  -- JSON with schema support
+  jsonls = {
+    settings = {
+      json = {
+        schemas = (function()
+          local ok, schemastore = pcall(require, 'schemastore')
+          if ok then
+            return schemastore.json.schemas()
+          else
+            return {}
+          end
+        end)(),
+        validate = { enable = true },
+      },
+    },
+  },
   -- Servers with default configs (no special settings needed)
   terraformls = {},
   bashls = {},
@@ -147,25 +164,16 @@ return {
       mason_lspconfig.setup {
         ensure_installed = ensure_installed,
         automatic_installation = true,
-        handlers = {
-          -- Default handler for all servers
-          function(server_name)
-            local config = server_configs[server_name] or {}
-            config.capabilities = vim.tbl_deep_extend('force', capabilities, config.capabilities or {})
+      }
 
-            -- Special handling for jsonls: load schemastore here (deferred require)
-            if server_name == 'jsonls' then
-              config.settings = {
-                json = {
-                  schemas = require('schemastore').json.schemas(),
-                  validate = { enable = true },
-                },
-              }
-            end
+      mason_lspconfig.setup_handlers {
+        -- Default handler for all servers
+        function(server_name)
+          local config = server_configs[server_name] or {}
+          config.capabilities = vim.tbl_deep_extend('force', capabilities, config.capabilities or {})
 
-            lspconfig[server_name].setup(config)
-          end,
-        },
+          lspconfig[server_name].setup(config)
+        end,
       }
 
       -- Diagnostic appearance
@@ -177,7 +185,6 @@ return {
         severity_sort = true,
         float = { border = 'rounded', source = 'always' },
       }
-
       -- Diagnostic signs in gutter
       local signs = { Error = ' ', Warn = ' ', Hint = '󰌵 ', Info = ' ' }
       for type, icon in pairs(signs) do

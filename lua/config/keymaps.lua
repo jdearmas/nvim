@@ -12,9 +12,23 @@ local map = vim.keymap.set
 -- Disable space in normal/visual (leader key)
 map({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 
--- Page navigation with j/k (without count)
-map('n', 'j', 'v:count > 0 ? "j" : "<C-f>"', { expr = true, silent = true, desc = "Down / PageDown" })
-map('n', 'k', 'v:count > 0 ? "k" : "<C-b>"', { expr = true, silent = true, desc = "Up / PageUp" })
+local jk_pagescroll_enabled = true
+
+map('n', 'j', function()
+  if vim.v.count > 0 then return "j" end
+  return jk_pagescroll_enabled and "<C-f>" or "j"
+end, { expr = true, silent = true, desc = "Down / PageDown (toggleable)" })
+
+map('n', 'k', function()
+  if vim.v.count > 0 then return "k" end
+  return jk_pagescroll_enabled and "<C-b>" or "k"
+end, { expr = true, silent = true, desc = "Up / PageUp (toggleable)" })
+
+map('n', '<leader>J', function()
+  jk_pagescroll_enabled = not jk_pagescroll_enabled
+  local state = jk_pagescroll_enabled and "Page scroll" or "Line move"
+  vim.notify("j/k now: " .. state, vim.log.levels.INFO, { title = "Keymap toggle" })
+end, { desc = "Toggle j/k page scrolling" })
 
 -- Center screen on navigation
 map("n", "<C-d>", "<C-d>zz", { desc = "Half page down (centered)" })
@@ -262,10 +276,7 @@ local function setup_which_key()
       end)
     end, desc = "Select Overseer task", mode = "n" },
     { "<leader>'h", function() require("harpoon").ui:toggle_quick_menu(require("harpoon"):list()) end, desc = "Harpoon menu", mode = "n" },
-    { "<leader>'r", function()
-      vim.cmd("source $MYVIMRC")
-      print("Config reloaded!")
-    end, desc = "Reload config", mode = "n" },
+    { "<leader>'r", fn.reload_config, desc = "Reload config", mode = "n" },
 
     -- ========================================================================
     -- Makeprg: <leader>m (visual)
